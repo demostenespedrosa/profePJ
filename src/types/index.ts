@@ -7,4 +7,6 @@ export type Lesson = {
     endTime: string; // ISO 8601 string
     totalValue: number;
     status: 'Scheduled' | 'Completed' | 'Cancelled';
+    turma?: string;
+    disciplina?: string;
 };

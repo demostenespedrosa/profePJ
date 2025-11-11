@@ -32,7 +32,7 @@ export default function NewLessonPage() {
     const handleAddLesson = async (values: any) => {
         if (!user || !institutions) return;
 
-        const { type, schoolId, date, dates, startTime, endTime } = values;
+        const { type, schoolId, date, dates, startTime, endTime, turma, disciplina } = values;
 
         const selectedInstitution = institutions.find(inst => inst.id === schoolId);
         if (!selectedInstitution) {
@@ -64,6 +64,8 @@ export default function NewLessonPage() {
                     endTime: endDateTime.toISOString(),
                     totalValue: totalValue,
                     status: 'Scheduled',
+                    turma: turma || '',
+                    disciplina: disciplina || '',
                 };
             };
             

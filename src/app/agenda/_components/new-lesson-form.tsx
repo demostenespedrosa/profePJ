@@ -47,6 +47,8 @@ const baseSchema = z.object({
   schoolId: z.string().min(1, "Selecione uma escola."),
   startTime: z.string().min(1, "Defina o horário de início."),
   endTime: z.string().min(1, "Defina o horário de término."),
+  turma: z.string().optional(),
+  disciplina: z.string().optional(),
 });
 
 const singleLessonSchema = baseSchema.extend({
@@ -66,6 +68,8 @@ export default function NewLessonForm({ schools, onSubmit, onCancel }: NewLesson
       schoolId: "",
       startTime: "",
       endTime: "",
+      turma: "",
+      disciplina: "",
       date: undefined,
       dates: [],
     },
@@ -181,6 +185,35 @@ export default function NewLessonForm({ schools, onSubmit, onCancel }: NewLesson
             </FormItem>
           )}
         />
+        
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="turma"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Turma (Opcional)</FormLabel>
+                <FormControl>
+                    <Input placeholder="Ex: 9º Ano A" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="disciplina"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Disciplina (Opcional)</FormLabel>
+                <FormControl>
+                    <Input placeholder="Ex: Matemática" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
             <FormField

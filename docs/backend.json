@@ -94,6 +94,14 @@
         "status": {
           "type": "string",
           "description": "The status of the lesson (e.g., 'Scheduled', 'Completed', 'Cancelled')."
+        },
+        "turma": {
+          "type": "string",
+          "description": "The class/group for the lesson."
+        },
+        "disciplina": {
+          "type": "string",
+          "description": "The subject of the lesson."
         }
       },
       "required": [

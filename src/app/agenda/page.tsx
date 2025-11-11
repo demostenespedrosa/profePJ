@@ -136,7 +136,7 @@ export default function AgendaPage() {
             <h3 className="font-bold text-lg text-foreground font-headline">Aulas do dia</h3>
             <div className="space-y-3">
                 {scheduledLessons.length > 0 ? (
-                    scheduledLessons.map((lesson: any) => (
+                    scheduledLessons.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()).map((lesson: any) => (
                         <Card key={lesson.id}>
                             <CardContent className="p-4 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
@@ -146,6 +146,11 @@ export default function AgendaPage() {
                                     </div>
                                     <div>
                                         <p className="font-semibold">{lesson.institutionName}</p>
+                                        {(lesson.turma || lesson.disciplina) && (
+                                            <p className="text-sm text-muted-foreground">
+                                                {lesson.turma}{lesson.turma && lesson.disciplina ? ' - ' : ''}{lesson.disciplina}
+                                            </p>
+                                        )}
                                         <p className="text-sm text-muted-foreground">Valor: R$ {lesson.totalValue.toFixed(2).replace('.', ',')}</p>
                                     </div>
                                 </div>
