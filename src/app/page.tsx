@@ -2,14 +2,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { DollarSign, Pocket, Star, Calendar, TrendingUp, Smile, PiggyBank } from "lucide-react";
+import { DollarSign, Pocket, Calendar, TrendingUp, Smile, PiggyBank } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { collection, doc } from "firebase/firestore";
-import { differenceInDays, isSameMonth, parseISO, isAfter, isToday, format, differenceInMonths, endOfYear } from "date-fns";
+import { differenceInDays, isSameMonth, parseISO, isAfter, format, differenceInMonths, endOfYear } from "date-fns";
 
 import MobileScreen from "@/components/layout/mobile-screen";
 import ActionCard from "@/components/profe/action-card";
-import CompleteLessonDialog from "@/components/profe/complete-lesson-dialog";
 import PayDasDialog from "@/components/profe/pay-das-dialog";
 import BottomNav from "@/components/layout/bottom-nav";
 import MonsterIcon from "@/components/icons/monster-icon";
@@ -54,7 +53,6 @@ type MonthlyObligation = {
 
 
 export default function Home() {
-  const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
   const [dasDialogOpen, setDasDialogOpen] = useState(false);
   const [greeting, setGreeting] = useState<{ title: string; subtitle: string } | null>(null);
   
@@ -88,14 +86,6 @@ export default function Home() {
 
     return { totalLessons, totalValue };
   }, [lessons]);
-
-  const nextLesson = useMemo(() => {
-    if (!lessons) return null;
-    const sortedLessons = [...lessons].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-    const now = new Date();
-    return sortedLessons.find(lesson => isAfter(new Date(lesson.startTime), now) || isToday(new Date(lesson.startTime))) || null;
-  }, [lessons]);
-
 
   const dasDueDateInfo = useMemo(() => {
     if (!userProfile) return null;
@@ -264,19 +254,8 @@ export default function Home() {
             </div>
         </div>
 
-        {(nextLesson || showDasCard || potSavingSuggestions.length > 0) && <div className="space-y-4">
+        {(showDasCard || potSavingSuggestions.length > 0) && <div className="space-y-4">
             <h3 className="font-bold text-lg text-foreground font-headline">Sua vez de agir!</h3>
-            {nextLesson && (
-                <ActionCard
-                    icon={<Star className="text-yellow-400 fill-yellow-400" />}
-                    title={`Você deu a aula na '${nextLesson.institutionName}' hoje?`}
-                    description="Bora receber por mais um dia de trabalho incrível!"
-                    ctaText="SIM! CONCLUÍ! 🤑"
-                    onCtaClick={() => setLessonDialogOpen(true)}
-                    className="bg-primary/10 border-primary/20 hover:border-primary/40"
-                    ctaClassName="bg-primary hover:bg-primary/90 text-primary-foreground"
-                />
-            )}
             {showDasCard && dasDueDateInfo && (
                 <ActionCard
                     icon={<MonsterIcon className="w-8 h-8 text-destructive" />}
@@ -327,7 +306,6 @@ export default function Home() {
 
       </main>
 
-      <CompleteLessonDialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen} />
       {dasDueDateInfo && 
         <PayDasDialog 
           open={dasDialogOpen} 
