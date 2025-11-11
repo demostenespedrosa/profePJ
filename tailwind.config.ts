@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'],
+        body: ['"PT Sans"', 'sans-serif'],
+        headline: ['"PT Sans"', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
@@ -88,10 +88,25 @@ export default {
             height: '0',
           },
         },
+        'confetti-fall': {
+          '0%': { transform: 'translateY(-100vh) rotateZ(0deg)', opacity: '1' },
+          '100%': { transform: 'translateY(100vh) rotateZ(720deg)', opacity: '0' },
+        },
+        'scale-in': {
+          '0%': { opacity: '0', transform: 'scale(0.5)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        'explode': {
+          '0%': { transform: 'scale(1)', opacity: '1' },
+          '100%': { transform: 'scale(2)', opacity: '0' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'confetti-fall': 'confetti-fall 3s linear infinite',
+        'scale-in': 'scale-in 0.5s cubic-bezier(0.25, 1, 0.5, 1)',
+        'explode': 'explode 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards',
       },
     },
   },
