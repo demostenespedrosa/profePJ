@@ -2,7 +2,7 @@
 'use client';
 
 import { Auth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { Firestore, doc, writeBatch } from "firebase/firestore";
+import { Firestore, doc, writeBatch, collection } from "firebase/firestore";
 
 const schoolColors = ["#34D399", "#F87171", "#60A5FA", "#FBBF24", "#A78BFA"];
 
@@ -32,7 +32,8 @@ export async function signUpAndCreateProfile(auth: Auth, firestore: Firestore, d
     batch.set(userDocRef, userProfileData);
 
     // 3.2. Initial institution document
-    const institutionDocRef = doc(firestore, `users/${user.uid}/institutions`, doc(firestore, `users/${user.uid}/institutions`).id);
+    const institutionCollectionRef = collection(firestore, `users/${user.uid}/institutions`);
+    const institutionDocRef = doc(institutionCollectionRef); // Create a reference with a new auto-generated ID
     const institutionData = {
         name: data.school.name,
         hourlyRate: data.school.hourlyRate,
