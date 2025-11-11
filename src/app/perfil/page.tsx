@@ -7,6 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Bell, ChevronRight, HelpCircle, LogOut, School, Shield, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useFirebase } from "@/firebase";
+import { signOut } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const menuItems = [
     { icon: UserIcon, label: "Meus Dados", href: "#" },
@@ -17,8 +21,27 @@ const menuItems = [
 ];
 
 export default function PerfilPage() {
+  const { user, auth, isUserLoading } = useFirebase();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    // Remove cookie
+    document.cookie = 'firebase-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    router.push('/login');
+  }
 
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');
+
+  if (isUserLoading || !user) {
+    return (
+        <MobileScreen>
+            <div className="flex items-center justify-center h-full">
+                <Skeleton className="w-24 h-24 rounded-full" />
+            </div>
+        </MobileScreen>
+    )
+  }
 
   return (
     <MobileScreen>
@@ -38,8 +61,8 @@ export default function PerfilPage() {
             className="rounded-full border-4 border-white shadow-lg"
             data-ai-hint={userAvatar.imageHint}
           />}
-          <h2 className="text-xl font-bold font-headline text-foreground">Professora Joana</h2>
-          <p className="text-sm text-muted-foreground">joana.silva@email.com</p>
+          <h2 className="text-xl font-bold font-headline text-foreground">{user.displayName}</h2>
+          <p className="text-sm text-muted-foreground">{user.email}</p>
         </div>
 
         <Card>
@@ -59,7 +82,7 @@ export default function PerfilPage() {
         </Card>
 
         <div className="pt-4">
-            <Button variant="outline" className="w-full text-destructive border-destructive/50 hover:bg-destructive/10 hover:text-destructive">
+            <Button onClick={handleLogout} variant="outline" className="w-full text-destructive border-destructive/50 hover:bg-destructive/10 hover:text-destructive">
                 <LogOut className="mr-2 h-4 w-4" />
                 Sair da Conta
             </Button>

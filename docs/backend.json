@@ -1,48 +1,36 @@
 {
   "entities": {
-    "User": {
+    "UserProfile": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "User",
+      "title": "User Profile",
       "type": "object",
-      "description": "Represents a user of the Profe Amigo application.",
+      "description": "Represents a user's profile information.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user. (Primary Key)"
-        },
         "name": {
           "type": "string",
-          "description": "The user's name."
+          "description": "The user's full name."
         },
         "email": {
           "type": "string",
-          "description": "The user's email address.",
-          "format": "email"
-        },
-        "password": {
-          "type": "string",
-          "description": "The user's password. (Note: In a real-world scenario, passwords should be stored securely using hashing and salting, and ideally managed by an authentication service.)"
+          "format": "email",
+          "description": "The user's email address."
         },
         "streakDays": {
           "type": "number",
-          "description": "The number of consecutive days the user has been actively managing their finances in the app."
+          "description": "The number of consecutive days the user has been actively managing their finances in the app.",
+          "default": 0
         },
         "xpTotal": {
           "type": "number",
-          "description": "The user's total experience points in the app (for gamification)."
+          "description": "The user's total experience points in the app (for gamification).",
+          "default": 0
         },
         "dasDueDate": {
           "type": "number",
           "description": "The day of the month the user's DAS tax is due."
         }
       },
-      "required": [
-        "id",
-        "name",
-        "email",
-        "password",
-        "dasDueDate"
-      ]
+      "required": ["name", "email", "dasDueDate"]
     },
     "Institution": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -50,14 +38,6 @@
       "type": "object",
       "description": "Represents an institution (e.g., school) where the user teaches.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the institution. (Primary Key)"
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Institution)"
-        },
         "name": {
           "type": "string",
           "description": "The name of the institution."
@@ -65,51 +45,23 @@
         "hourlyRate": {
           "type": "number",
           "description": "The user's hourly rate at this institution."
+        },
+        "color": {
+          "type": "string",
+          "description": "A color to identify the institution in the UI."
+        },
+        "recessStart": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The start date of the school's recess period."
+        },
+        "recessEnd": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The end date of the school's recess period."
         }
       },
-      "required": [
-        "id",
-        "userId",
-        "name",
-        "hourlyRate"
-      ]
-    },
-    "Recess": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Recess",
-      "type": "object",
-      "description": "Represents a school recess or break.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the recess. (Primary Key)"
-        },
-        "institutionId": {
-          "type": "string",
-          "description": "Reference to Institution. (Relationship: Institution 1:N Recess)"
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the recess (e.g., 'Winter Break')."
-        },
-        "startDate": {
-          "type": "string",
-          "description": "The start date of the recess.",
-          "format": "date-time"
-        },
-        "endDate": {
-          "type": "string",
-          "description": "The end date of the recess.",
-          "format": "date-time"
-        }
-      },
-      "required": [
-        "id",
-        "institutionId",
-        "name",
-        "startDate",
-        "endDate"
-      ]
+      "required": ["name", "hourlyRate", "color"]
     },
     "Lesson": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -117,17 +69,9 @@
       "type": "object",
       "description": "Represents a single lesson taught by the user.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the lesson. (Primary Key)"
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Lesson)"
-        },
         "institutionId": {
           "type": "string",
-          "description": "Reference to Institution. (Relationship: Institution 1:N Lesson)"
+          "description": "Reference to Institution."
         },
         "institutionName": {
           "type": "string",
@@ -153,8 +97,6 @@
         }
       },
       "required": [
-        "id",
-        "userId",
         "institutionId",
         "institutionName",
         "startTime",
@@ -167,16 +109,8 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Pot",
       "type": "object",
-      "description": "Represents a virtual 'pot' for saving money towards specific goals (e.g., vacation, 13th salary).",
+      "description": "Represents a virtual 'pot' for saving money towards specific goals.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the pot. (Primary Key)"
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Pot)"
-        },
         "name": {
           "type": "string",
           "description": "The name of the pot (e.g., 'Vacation Fund')."
@@ -189,19 +123,16 @@
           "type": "number",
           "description": "The current virtual balance of the pot."
         },
+        "goal": {
+          "type": "number",
+          "description": "The goal amount for the pot."
+        },
         "allocationPercentage": {
           "type": "number",
           "description": "The percentage of each lesson's earnings allocated to this pot."
         }
       },
-      "required": [
-        "id",
-        "userId",
-        "name",
-        "type",
-        "virtualBalance",
-        "allocationPercentage"
-      ]
+      "required": ["name", "type", "virtualBalance", "goal", "allocationPercentage"]
     },
     "MonthlyObligation": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -209,14 +140,6 @@
       "type": "object",
       "description": "Represents the user's monthly tax obligation (DAS).",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the monthly obligation. (Primary Key)"
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N MonthlyObligation)"
-        },
         "monthRef": {
           "type": "string",
           "description": "The month and year the obligation is for (e.g., 'November/2025')."
@@ -234,145 +157,32 @@
           "description": "The status of the DAS payment (e.g., 'Pending', 'Paid', 'Overdue')."
         }
       },
-      "required": [
-        "id",
-        "userId",
-        "monthRef",
-        "totalRevenue",
-        "estimatedTaxValue",
-        "status"
-      ]
+      "required": ["monthRef", "totalRevenue", "estimatedTaxValue", "status"]
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Represents a user of the Profe Amigo application. Includes the user's profile information and application settings. This path ensures path-based ownership.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/institutions/{institutionId}",
-        "definition": {
-          "entityName": "Institution",
-          "schema": {
-            "$ref": "#/backend/entities/Institution"
-          },
-          "description": "Represents an institution (e.g., school) where the user teaches. This path ensures path-based ownership.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "institutionId",
-              "description": "The unique identifier of the institution."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/institutions/{institutionId}/recesses/{recessId}",
-        "definition": {
-          "entityName": "Recess",
-          "schema": {
-            "$ref": "#/backend/entities/Recess"
-          },
-          "description": "Represents a school recess or break. This path ensures path-based ownership.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "institutionId",
-              "description": "The unique identifier of the institution."
-            },
-            {
-              "name": "recessId",
-              "description": "The unique identifier of the recess."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/lessons/{lessonId}",
-        "definition": {
-          "entityName": "Lesson",
-          "schema": {
-            "$ref": "#/backend/entities/Lesson"
-          },
-          "description": "Represents a single lesson taught by the user. Includes denormalized 'institutionName' for authorization independence and efficient data retrieval. This path ensures path-based ownership.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "lessonId",
-              "description": "The unique identifier of the lesson."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/pots/{potId}",
-        "definition": {
-          "entityName": "Pot",
-          "schema": {
-            "$ref": "#/backend/entities/Pot"
-          },
-          "description": "Represents a virtual 'pot' for saving money towards specific goals (e.g., vacation, 13th salary). This path ensures path-based ownership.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "potId",
-              "description": "The unique identifier of the pot."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/monthly_obligations/{obligationId}",
-        "definition": {
-          "entityName": "MonthlyObligation",
-          "schema": {
-            "$ref": "#/backend/entities/MonthlyObligation"
-          },
-          "description": "Represents the user's monthly tax obligation (DAS). This path ensures path-based ownership.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "obligationId",
-              "description": "The unique identifier of the monthly obligation (e.g., '2025_11')."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore data structure is designed to support the 'Profe Amigo' application, focusing on ease of use, gamification, and eliminating financial anxiety for teachers. The structure prioritizes authorization independence, clarity, and scalability. Path-based ownership is used for private user data, while denormalization ensures security rules can be written without relying on costly `get()` operations. The use of subcollections is minimized to improve query performance and simplify security rules.\n\n**Authorization Independence (CRITICAL):** Denormalization is used to avoid hierarchical authorization dependencies. For example, the `Lesson` entity denormalizes the `institutionName` to avoid needing to fetch the Institution document for display purposes.\n\n**Structural Segregation (Homogeneous Security Posture):** Data is segregated based on ownership. User-specific data (e.g., institutions, pots, monthly obligations) is stored within the `/users/{userId}` collection, ensuring that only the user has access to their own data.\n\n**Access Modeling (Standardization and Consistency):** The data structure uses path-based ownership for user-owned data (e.g., `/users/{userId}/institutions/{institutionId}`). This approach provides a clear and secure way to manage access control. The membership map is not applicable in the provided structure because there is no collaborative access.\n\n**QAPs (Rules are not Filters):** The structure enables secure `list` operations by ensuring that all documents in a collection share the same security requirements. Path-based ownership (e.g., `/users/{userId}/lessons`) ensures that listing lessons is secure because only the user can access their own lessons."
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores public-facing profile data for a user."
+    },
+    "/users/{userId}/institutions/{institutionId}": {
+      "schema": { "$ref": "#/entities/Institution" },
+      "description": "Represents an institution where the user teaches."
+    },
+    "/users/{userId}/lessons/{lessonId}": {
+      "schema": { "$ref": "#/entities/Lesson" },
+      "description": "Represents a single lesson taught by the user."
+    },
+    "/users/{userId}/pots/{potId}": {
+      "schema": { "$ref": "#/entities/Pot" },
+      "description": "Represents a virtual 'pot' for saving money."
+    },
+    "/users/{userId}/monthly_obligations/{obligationId}": {
+      "schema": { "$ref": "#/entities/MonthlyObligation" },
+      "description": "Represents the user's monthly tax obligation (DAS)."
+    }
   }
 }

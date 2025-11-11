@@ -23,7 +23,8 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https',
+        protocol: 'https'
+        ,
         hostname: 'picsum.photos',
         port: '',
         pathname: '/**',
@@ -34,6 +35,43 @@ const nextConfig: NextConfig = {
     allowedDevOrigins: [
         '*.cluster-mdgxqvvkkbfpqrfigfiuugu5pk.cloudworkstations.dev',
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/login',
+        permanent: false,
+        missing: [
+            {
+                type: 'cookie',
+                key: 'firebase-auth-token',
+            }
+        ]
+      },
+       {
+        source: '/login',
+        destination: '/',
+        permanent: false,
+        has: [
+            {
+                type: 'cookie',
+                key: 'firebase-auth-token',
+            }
+        ]
+      },
+      {
+        source: '/cadastro',
+        destination: '/',
+        permanent: false,
+        has: [
+            {
+                type: 'cookie',
+                key: 'firebase-auth-token',
+            }
+        ]
+      }
+    ]
   },
 };
 

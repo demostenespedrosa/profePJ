@@ -3,10 +3,10 @@
 
 import { useState, useEffect } from "react";
 import Image from 'next/image';
-import { DollarSign, Pocket, Smile, Star, Calendar, TrendingUp } from "lucide-react";
+import { DollarSign, Pocket, Smile, Star, Calendar, TrendingUp, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import MobileScreen from "@/components/layout/mobile-screen";
-import HomeHeader from "@/components/profe/home-header";
 import ActionCard from "@/components/profe/action-card";
 import CompleteLessonDialog from "@/components/profe/complete-lesson-dialog";
 import PayDasDialog from "@/components/profe/pay-das-dialog";
@@ -17,6 +17,10 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card } from "@/components/ui/card";
 import { generateHomeGreeting } from "@/ai/flows/generate-home-greeting";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useFirebase } from "@/firebase";
+import { signOut } from "firebase/auth";
+import { Button } from "@/components/ui/button";
+
 
 // Mock data, to be replaced by dynamic data later
 const lessonsByDay = {
@@ -36,7 +40,6 @@ const lessonsByDay = {
 };
 
 const streakDays = 5;
-const userName = "Joana";
 
 
 export default function Home() {
@@ -44,6 +47,9 @@ export default function Home() {
   const [dasDialogOpen, setDasDialogOpen] = useState(false);
   const [monthlyStats, setMonthlyStats] = useState({ totalLessons: 0, totalValue: 0 });
   const [greeting, setGreeting] = useState<{ title: string; subtitle: string } | null>(null);
+  
+  const { user, auth, isUserLoading } = useFirebase();
+  const router = useRouter();
 
   useEffect(() => {
     const currentMonth = new Date().getMonth();
@@ -65,9 +71,10 @@ export default function Home() {
     setMonthlyStats({ totalLessons, totalValue });
 
     async function fetchGreeting() {
+      if (!user) return;
       try {
         const response = await generateHomeGreeting({
-          userName: userName,
+          userName: user.displayName || 'Professor(a)',
           streakDays: streakDays,
           monthlyLessons: totalLessons,
           monthlyEarnings: totalValue,
@@ -80,20 +87,48 @@ export default function Home() {
         console.error("Error generating greeting:", error);
         // Fallback greeting
         setGreeting({
-          title: `Olá, ${userName}!`,
+          title: `Olá, ${user.displayName || 'Professor(a)'}!`,
           subtitle: "Você está no controle da sua grana!"
         });
       }
     }
 
     fetchGreeting();
-  }, []);
+  }, [user]);
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    // Remove cookie
+    document.cookie = 'firebase-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    router.push('/login');
+  }
 
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');
 
+  if (isUserLoading || !user) {
+    return (
+        <MobileScreen>
+            <div className="flex items-center justify-center h-full">
+                <Skeleton className="w-24 h-24 rounded-full" />
+            </div>
+        </MobileScreen>
+    )
+  }
+
   return (
     <MobileScreen>
-      <HomeHeader />
+        <header className="sticky top-0 z-10 flex items-center justify-between p-4 bg-background/80 backdrop-blur-sm border-b">
+            <div>
+                <h1 className="text-2xl font-bold font-headline text-foreground">
+                Olá, {user?.displayName?.split(' ')[0] || 'Professor(a)'}!
+                </h1>
+                <p className="text-sm text-muted-foreground">Aqui está seu resumo de hoje.</p>
+            </div>
+            <Button variant="ghost" size="icon" onClick={handleLogout}>
+                <LogOut className="w-5 h-5" />
+            </Button>
+        </header>
+
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
         <div className="text-center py-6">
