@@ -5,17 +5,17 @@ import MobileScreen from "@/components/layout/mobile-screen";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MoreVertical, Plus, Trash2 } from "lucide-react";
+import { MoreVertical, Plus, Trash2, CalendarRange } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
   DialogClose
 } from "@/components/ui/dialog";
 import NewSchoolForm from './_components/new-school-form';
+import { format } from 'date-fns';
 
 const initialSchools = [
     {
@@ -23,18 +23,24 @@ const initialSchools = [
         name: "Escola ABC",
         hourlyRate: 50,
         color: "#34D399",
+        recessStart: new Date("2024-12-15"),
+        recessEnd: new Date("2025-01-05"),
     },
     {
         id: 2,
         name: "Escola XYZ",
         hourlyRate: 65,
         color: "#F87171",
+        recessStart: new Date("2024-12-20"),
+        recessEnd: new Date("2025-01-10"),
     },
     {
         id: 3,
         name: "Escola 123",
         hourlyRate: 75,
         color: "#60A5FA",
+        recessStart: new Date("2024-07-01"),
+        recessEnd: new Date("2024-07-31"),
     }
 ];
 
@@ -60,10 +66,10 @@ export default function InstituicoesPage() {
                     <span className="sr-only">Adicionar Instituição</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-md">
                   <DialogHeader>
                       <DialogTitle>Nova Instituição</DialogTitle>
-                      <CardDescription>Preencha os dados para cadastrar uma nova escola.</CardDescription>
+                      <CardDescription>Preencha os dados para cadastrar uma nova escola e seu período de recesso.</CardDescription>
                   </DialogHeader>
                   <NewSchoolForm onSubmit={handleAddSchool} onCancel={() => setIsFormOpen(false)} />
               </DialogContent>
@@ -76,10 +82,16 @@ export default function InstituicoesPage() {
                  <Card key={school.id} className="transform transition-transform duration-200 hover:scale-[1.02]">
                     <CardContent className="p-4 flex items-center justify-between">
                        <div className="flex items-center gap-4">
-                          <div className="w-4 h-12 rounded-full" style={{ backgroundColor: school.color }} />
+                          <div className="w-4 h-full min-h-[4rem] rounded-full" style={{ backgroundColor: school.color }} />
                           <div>
                             <p className="font-bold text-lg">{school.name}</p>
                             <p className="text-sm text-muted-foreground">R$ {school.hourlyRate.toFixed(2).replace('.', ',')} / hora</p>
+                             <div className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
+                                <CalendarRange className="w-4 h-4" />
+                                <span>
+                                    {format(school.recessStart, "dd/MM")} - {format(school.recessEnd, "dd/MM")}
+                                </span>
+                             </div>
                           </div>
                        </div>
                        <Button variant="ghost" size="icon" className="text-muted-foreground">
