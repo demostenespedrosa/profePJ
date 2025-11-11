@@ -32,7 +32,7 @@ import { useState } from "react";
 
 
 type School = {
-    id: number;
+    id: string;
     name: string;
     color: string;
 }
@@ -168,7 +168,7 @@ export default function NewLessonForm({ schools, onSubmit, onCancel }: NewLesson
                 </FormControl>
                 <SelectContent>
                     {schools.map(school => (
-                        <SelectItem key={school.id} value={String(school.id)}>
+                        <SelectItem key={school.id} value={school.id}>
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: school.color }}/>
                                 <span>{school.name}</span>
