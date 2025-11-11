@@ -16,43 +16,56 @@ import {
   DialogClose
 } from "@/components/ui/dialog";
 import NewSchoolForm from './_components/new-school-form';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, addDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const initialSchools = [
-    {
-        id: 1,
-        name: "Escola ABC",
-        hourlyRate: 50,
-        color: "#34D399",
-        recessStart: null,
-        recessEnd: null,
-    },
-    {
-        id: 2,
-        name: "Escola XYZ",
-        hourlyRate: 65,
-        color: "#F87171",
-        recessStart: null,
-        recessEnd: null,
-    },
-    {
-        id: 3,
-        name: "Escola 123",
-        hourlyRate: 75,
-        color: "#60A5FA",
-        recessStart: new Date("2024-07-01T03:00:00.000Z"),
-        recessEnd: new Date("2024-07-31T03:00:00.000Z"),
-    }
-];
+type Institution = {
+    id: string;
+    name: string;
+    hourlyRate: number;
+    color: string;
+    recessStart?: string | null;
+    recessEnd?: string | null;
+};
+
 
 export default function InstituicoesPage() {
-  const [schools, setSchools] = useState(initialSchools);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const { user, firestore, isUserLoading } = useFirebase();
+  const { toast } = useToast();
 
-  const handleAddSchool = (newSchool: Omit<typeof initialSchools[0], 'id' | 'recessStart' | 'recessEnd'>) => {
-    setSchools(prev => [...prev, { ...newSchool, id: prev.length + 1, recessStart: null, recessEnd: null }]);
-    setIsFormOpen(false);
+  const institutionsColRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/institutions`) : null, [firestore, user]);
+  const { data: schools, isLoading: areSchoolsLoading } = useCollection<Institution>(institutionsColRef);
+
+  const handleAddSchool = async (newSchoolData: Omit<Institution, 'id' | 'recessStart' | 'recessEnd'>) => {
+    if (!user) return;
+
+    try {
+        const institutionsRef = collection(firestore, `users/${user.uid}/institutions`);
+        await addDoc(institutionsRef, {
+            ...newSchoolData,
+            recessStart: null,
+            recessEnd: null,
+        });
+        toast({
+            title: "Sucesso!",
+            description: `A instituição "${newSchoolData.name}" foi adicionada.`,
+        });
+        setIsFormOpen(false);
+    } catch (error: any) {
+        console.error("Error adding institution: ", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao salvar",
+            description: error.message || "Não foi possível adicionar a instituição. Tente novamente.",
+        });
+    }
   }
+  
+  const isLoading = isUserLoading || areSchoolsLoading;
 
   return (
     <MobileScreen>
@@ -62,7 +75,7 @@ export default function InstituicoesPage() {
             </h1>
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" disabled={!user}>
                     <Plus className="h-6 w-6" />
                     <span className="sr-only">Adicionar Instituição</span>
                 </Button>
@@ -79,7 +92,26 @@ export default function InstituicoesPage() {
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
         <div className="space-y-4">
-            {schools.length > 0 ? schools.map((school) => (
+            {isLoading ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                    <Card key={index}>
+                        <CardContent className="p-4 space-y-4">
+                           <div className="flex items-start justify-between">
+                             <div className="flex items-start gap-4">
+                                <Skeleton className="w-3 h-3 mt-1.5 rounded-full flex-shrink-0" />
+                                <div className='flex flex-col space-y-2'>
+                                    <Skeleton className="h-6 w-32" />
+                                    <Skeleton className="h-4 w-24" />
+                                </div>
+                            </div>
+                                <Skeleton className="h-9 w-9" />
+                           </div>
+                           <Skeleton className="h-px w-full" />
+                           <Skeleton className="h-10 w-full" />
+                        </CardContent>
+                    </Card>
+                ))
+            ) : schools && schools.length > 0 ? schools.map((school) => (
                  <Card key={school.id} className="transform transition-transform duration-200 hover:scale-[1.02]">
                     <CardContent className="p-4">
                         <div className="flex items-start justify-between">
@@ -103,7 +135,7 @@ export default function InstituicoesPage() {
                                 <div>
                                     <span className='font-medium text-foreground'>Período de recesso</span>
                                     <p>
-                                        {format(school.recessStart, "dd/MM/yyyy")} - {format(school.recessEnd, "dd/MM/yyyy")}
+                                        {format(parseISO(school.recessStart), "dd/MM/yyyy")} - {format(parseISO(school.recessEnd), "dd/MM/yyyy")}
                                     </p>
                                 </div>
                              </div>
