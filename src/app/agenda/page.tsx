@@ -9,7 +9,7 @@ import { ptBR } from "date-fns/locale";
 import MobileScreen from "@/components/layout/mobile-screen";
 import BottomNav from "@/components/layout/bottom-nav";
 import { DayContent, DayProps } from "react-day-picker";
-import { format, isSameDay } from "date-fns";
+import { format } from "date-fns";
 
 const lessonsByDay = {
     '2024-07-15': [
@@ -24,9 +24,6 @@ const lessonsByDay = {
     ],
 };
 
-
-// Today's lessons for the list view
-const scheduledLessons = lessonsByDay[format(new Date(), 'yyyy-MM-dd')] || [];
 
 function DayWithDots(props: DayProps) {
   const dateStr = format(props.date, 'yyyy-MM-dd');
@@ -53,6 +50,9 @@ function DayWithDots(props: DayProps) {
 
 export default function AgendaPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
+
+  const selectedDateStr = date ? format(date, 'yyyy-MM-dd') : '';
+  const scheduledLessons = lessonsByDay[selectedDateStr as keyof typeof lessonsByDay] || [];
 
   return (
     <MobileScreen>
@@ -89,27 +89,28 @@ export default function AgendaPage() {
         <div className="space-y-4">
             <h3 className="font-bold text-lg text-foreground font-headline">Aulas do dia</h3>
             <div className="space-y-3">
-                {scheduledLessons.map((lesson) => (
-                    <Card key={lesson.id}>
-                        <CardContent className="p-4 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="text-center">
-                                    <p className="font-bold text-lg">{lesson.time}</p>
+                {scheduledLessons.length > 0 ? (
+                    scheduledLessons.map((lesson) => (
+                        <Card key={lesson.id}>
+                            <CardContent className="p-4 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="text-center">
+                                        <p className="font-bold text-lg">{lesson.time}</p>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold">{lesson.school}</p>
+                                        <p className="text-sm text-muted-foreground">Valor: {lesson.value}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="font-semibold">{lesson.school}</p>
-                                    <p className="text-sm text-muted-foreground">Valor: {lesson.value}</p>
-                                </div>
-                            </div>
-                             <Button variant="ghost" size="icon" className="text-muted-foreground">
-                                <Plus className="h-5 w-5 -rotate-45" />
-                             </Button>
-                        </CardContent>
-                    </Card>
-                ))}
-                {scheduledLessons.length === 0 && (
+                                <Button variant="ghost" size="icon" className="text-muted-foreground">
+                                    <Plus className="h-5 w-5 -rotate-45" />
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    ))
+                ) : (
                      <div className="text-center py-8 px-4 border-2 border-dashed rounded-lg">
-                        <p className="text-muted-foreground">Nenhuma aula agendada para hoje.</p>
+                        <p className="text-muted-foreground">Nenhuma aula agendada para este dia.</p>
                      </div>
                 )}
             </div>
