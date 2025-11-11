@@ -8,11 +8,48 @@ import { Plus } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import MobileScreen from "@/components/layout/mobile-screen";
 import BottomNav from "@/components/layout/bottom-nav";
+import { DayContent, DayProps } from "react-day-picker";
+import { format, isSameDay } from "date-fns";
 
-const scheduledLessons = [
-    { id: 1, time: "10:00", school: "Escola ABC", value: "R$ 50,00" },
-    { id: 2, time: "14:00", school: "Escola XYZ", value: "R$ 65,00" },
-];
+const lessonsByDay = {
+    '2024-07-15': [
+        { id: 1, time: "10:00", school: "Escola ABC", value: "R$ 50,00", color: "#34D399" }, // green-400
+    ],
+    '2024-07-18': [
+        { id: 2, time: "14:00", school: "Escola XYZ", value: "R$ 65,00", color: "#F87171" }, // red-400
+        { id: 3, time: "16:00", school: "Escola 123", value: "R$ 75,00", color: "#60A5FA" }, // blue-400
+    ],
+    '2024-07-25': [
+        { id: 4, time: "09:00", school: "Escola XYZ", value: "R$ 65,00", color: "#F87171" }, // red-400
+    ],
+};
+
+
+// Today's lessons for the list view
+const scheduledLessons = lessonsByDay[format(new Date(), 'yyyy-MM-dd')] || [];
+
+function DayWithDots(props: DayProps) {
+  const dateStr = format(props.date, 'yyyy-MM-dd');
+  const lessons = lessonsByDay[dateStr as keyof typeof lessonsByDay];
+  
+  return (
+    <div className="relative">
+      <DayContent {...props} />
+      {lessons && lessons.length > 0 && (
+        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center space-x-1">
+          {lessons.slice(0, 3).map((lesson, index) => (
+            <div
+              key={index}
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: lesson.color }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 export default function AgendaPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -38,6 +75,9 @@ export default function AgendaPage() {
                     onSelect={setDate}
                     locale={ptBR}
                     className="p-4"
+                    components={{
+                        DayContent: DayWithDots,
+                    }}
                     classNames={{
                         day_selected: "bg-primary text-primary-foreground hover:bg-primary/90 focus:bg-primary/90",
                         day_today: "bg-accent/50 text-accent-foreground",
