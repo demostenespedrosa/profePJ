@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MobileScreen from "@/components/layout/mobile-screen";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { DollarSign, Plus, Pocket, Target } from "lucide-react";
 import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -19,7 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import NewPotForm from "./_components/new-pot-form";
-import { format } from "date-fns";
+import { format, parseISO, eachDayOfInterval, isSunday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 type Pot = {
@@ -31,6 +31,14 @@ type Pot = {
     type: 'Mandatory' | 'Dream';
     deadline?: string;
 };
+
+type Institution = {
+    id:string;
+    name:string;
+    hourlyRate: number;
+    recessStart?: string;
+    recessEnd?: string;
+}
 
 const iconMap = {
     "Férias 🏖️": <Pocket className="w-8 h-8 text-accent" />,
@@ -51,6 +59,51 @@ export default function PotinhosPage() {
   
   const potsColRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/pots`) : null, [firestore, user]);
   const { data: potinhos, isLoading: arePotsLoading } = useCollection<Pot>(potsColRef);
+  
+  const institutionsColRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/institutions`) : null, [firestore, user]);
+  const { data: institutions, isLoading: areInstitutionsLoading } = useCollection<Institution>(institutionsColRef);
+
+
+  useEffect(() => {
+    if (!user || !institutions || !potinhos) return;
+
+    const calculateAndSetVacationGoal = async () => {
+        let maxLostRevenue = 0;
+
+        institutions.forEach(inst => {
+            if (inst.recessStart && inst.recessEnd) {
+                const startDate = parseISO(inst.recessStart);
+                const endDate = parseISO(inst.recessEnd);
+
+                const daysInRecess = eachDayOfInterval({ start: startDate, end: endDate });
+                const workingDays = daysInRecess.filter(day => !isSunday(day)).length;
+                
+                const lostHours = workingDays * 4;
+                const lostRevenue = lostHours * inst.hourlyRate;
+                
+                if(lostRevenue > maxLostRevenue) {
+                    maxLostRevenue = lostRevenue;
+                }
+            }
+        });
+        
+        const vacationPot = potinhos.find(p => p.name.includes("Férias"));
+
+        if (vacationPot && maxLostRevenue > 0 && vacationPot.goal !== maxLostRevenue) {
+            try {
+                const potRef = doc(firestore, `users/${user.uid}/pots/${vacationPot.id}`);
+                await updateDoc(potRef, { goal: maxLostRevenue });
+                console.log(`Meta do potinho de férias atualizada para: R$ ${maxLostRevenue.toFixed(2)}`);
+            } catch (error) {
+                console.error("Erro ao atualizar a meta do potinho de férias:", error);
+            }
+        }
+    };
+
+    calculateAndSetVacationGoal();
+
+  }, [institutions, potinhos, user, firestore]);
+
 
   const handleAddPot = async (newPotData: { name: string; goal: number; deadline?: Date }) => {
      if (!user) return;
@@ -79,7 +132,7 @@ export default function PotinhosPage() {
     }
   }
 
-  const isLoading = isUserLoading || arePotsLoading;
+  const isLoading = isUserLoading || arePotsLoading || areInstitutionsLoading;
   
   const mandatoryPots = potinhos?.filter(p => p.type === 'Mandatory') || [];
   const dreamPots = potinhos?.filter(p => p.type === 'Dream') || [];
@@ -138,16 +191,18 @@ export default function PotinhosPage() {
                                 {getIconForPot(potinho.name)}
                                 <div className="flex-1">
                                     <CardTitle className="text-xl font-bold">{potinho.name}</CardTitle>
-                                    <CardDescription className="text-sm">Meta: R$ {potinho.goal.toFixed(2).replace('.', ',')}</CardDescription>
+                                     <CardDescription className="text-sm">
+                                        Meta: R$ {potinho.goal > 0 ? potinho.goal.toFixed(2).replace('.', ',') : 'Calculando...'}
+                                    </CardDescription>
                                 </div>
                             </CardHeader>
                             <CardContent>
                             <div className="mb-2">
                                 <span className="text-2xl font-bold text-foreground">R$ {potinho.virtualBalance.toFixed(2).replace('.', ',')}</span>
                             </div>
-                                <Progress value={(potinho.virtualBalance / potinho.goal) * 100} className="h-3" />
+                                <Progress value={potinho.goal > 0 ? (potinho.virtualBalance / potinho.goal) * 100 : 0} className="h-3" />
                                 <p className="text-xs text-muted-foreground mt-1.5 text-right">
-                                    {Math.round((potinho.virtualBalance / potinho.goal) * 100)}% completo
+                                    {potinho.goal > 0 ? Math.round((potinho.virtualBalance / potinho.goal) * 100) : 0}% completo
                                 </p>
                             </CardContent>
                         </Card>
