@@ -5,12 +5,11 @@ import BottomNav from "@/components/layout/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Bell, ChevronRight, HelpCircle, LogOut, School, Shield, User as UserIcon } from "lucide-react";
-import Image from "next/image";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const menuItems = [
     { icon: UserIcon, label: "Meus Dados", href: "#" },
@@ -34,8 +33,6 @@ export default function PerfilPage() {
         console.error("Error signing out: ", error);
     }
   }
-
-  const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');
 
   if (isUserLoading || !user) {
     return (
@@ -68,15 +65,12 @@ export default function PerfilPage() {
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
-        <div className="flex flex-col items-center space-y-2 pt-4">
-          {userAvatar && <Image
-            src={userAvatar.imageUrl}
-            alt={userAvatar.description}
-            width={96}
-            height={96}
-            className="rounded-full border-4 border-white shadow-lg"
-            data-ai-hint={userAvatar.imageHint}
-          />}
+        <div className="flex flex-col items-center space-y-2 pt-4 text-center">
+           <Avatar className="w-24 h-24 mb-4">
+            <AvatarFallback className="text-4xl bg-muted">
+              {user.displayName?.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
           <h2 className="text-xl font-bold font-headline text-foreground">{user.displayName}</h2>
           <p className="text-sm text-muted-foreground">{user.email}</p>
         </div>
