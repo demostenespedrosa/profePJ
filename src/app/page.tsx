@@ -2,11 +2,10 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Image from 'next/image';
-import { DollarSign, Pocket, Star, Calendar, TrendingUp, Smile, Loader2 } from "lucide-react";
+import { DollarSign, Pocket, Star, Calendar, TrendingUp, Smile, PiggyBank } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { collection, doc } from "firebase/firestore";
-import { differenceInDays, isSameMonth, startOfMonth, endOfMonth, isAfter, isToday, parseISO, format } from "date-fns";
+import { differenceInDays, isSameMonth, parseISO, isAfter, isToday, format, differenceInMonths, endOfYear } from "date-fns";
 
 import MobileScreen from "@/components/layout/mobile-screen";
 import ActionCard from "@/components/profe/action-card";
@@ -14,7 +13,6 @@ import CompleteLessonDialog from "@/components/profe/complete-lesson-dialog";
 import PayDasDialog from "@/components/profe/pay-das-dialog";
 import BottomNav from "@/components/layout/bottom-nav";
 import MonsterIcon from "@/components/icons/monster-icon";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card, CardContent } from "@/components/ui/card";
 import { generateHomeGreeting } from "@/ai/flows/generate-home-greeting";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,6 +34,8 @@ type Pot = {
   virtualBalance: number;
   goal: number;
   allocationPercentage: number;
+  deadline?: string;
+  type: 'Mandatory' | 'Dream';
 };
 
 type Institution = {
@@ -112,8 +112,8 @@ export default function Home() {
     const currentMonthId = format(new Date(), "yyyy-MM");
     const isPaid = monthlyObligations.some(ob => ob.id === currentMonthId && ob.status === 'Paid');
 
-    // Show card if not paid and it's 3 days or less until the due date
-    return !isPaid && dasDueDateInfo.daysUntilDue >= 0 && dasDueDateInfo.daysUntilDue <= 3;
+    // Show card if not paid and it's 5 days or less until the due date
+    return !isPaid && dasDueDateInfo.daysUntilDue >= 0 && dasDueDateInfo.daysUntilDue <= 5;
 
   }, [dasDueDateInfo, monthlyObligations]);
 
@@ -128,6 +128,47 @@ export default function Home() {
     });
     return upcomingRecess;
   }, [institutions]);
+
+  const potSavingSuggestions = useMemo(() => {
+    if (!pots || !institutions) return [];
+
+    const today = new Date();
+    
+    return pots.map(pot => {
+        let deadline: Date | null = null;
+        
+        if (pot.name.includes("13º")) {
+            deadline = endOfYear(today);
+        } else if (pot.name.includes("Férias")) {
+            const upcomingRecesses = institutions
+                .filter(inst => inst.recessStart && isAfter(parseISO(inst.recessStart), today))
+                .map(inst => parseISO(inst.recessStart!))
+                .sort((a, b) => a.getTime() - b.getTime());
+            if (upcomingRecesses.length > 0) {
+                deadline = upcomingRecesses[0];
+            }
+        } else if (pot.deadline) {
+            deadline = parseISO(pot.deadline);
+        }
+
+        if (!deadline || pot.goal <= 0 || pot.virtualBalance >= pot.goal) return null;
+
+        const monthsRemaining = differenceInMonths(deadline, today) + 1;
+        if (monthsRemaining <= 0) return null;
+        
+        const remainingGoal = pot.goal - pot.virtualBalance;
+        const monthlyAmount = remainingGoal / monthsRemaining;
+        
+        if (monthlyAmount <= 0) return null;
+
+        return {
+            id: pot.id,
+            name: pot.name,
+            monthlyAmount: monthlyAmount,
+        };
+    }).filter(p => p !== null);
+
+  }, [pots, institutions]);
 
 
   useEffect(() => {
@@ -157,15 +198,14 @@ export default function Home() {
     fetchGreeting();
   }, [user, userProfile, areLessonsLoading, monthlyStats]);
 
-
-  const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');
-
   if (isLoading) {
     return (
         <MobileScreen>
+            <header className="sticky top-0 z-10 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm border-b">
+               <Logo className="h-8 w-auto text-primary" />
+            </header>
             <div className="flex flex-col items-center justify-center h-full p-4 space-y-8">
-                <Skeleton className="w-24 h-24 rounded-full" />
-                <div className="w-full space-y-2">
+                 <div className="w-full space-y-2 text-center">
                     <Skeleton className="h-8 w-3/4 mx-auto" />
                     <Skeleton className="h-5 w-1/2 mx-auto" />
                 </div>
@@ -224,7 +264,7 @@ export default function Home() {
             </div>
         </div>
 
-        {(nextLesson || showDasCard) && <div className="space-y-4">
+        {(nextLesson || showDasCard || potSavingSuggestions.length > 0) && <div className="space-y-4">
             <h3 className="font-bold text-lg text-foreground font-headline">Sua vez de agir!</h3>
             {nextLesson && (
                 <ActionCard
@@ -248,12 +288,22 @@ export default function Home() {
                     ctaClassName="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                 />
             )}
+            {potSavingSuggestions.map((pot: any) => (
+                <ActionCard
+                    key={pot.id}
+                    icon={<PiggyBank className="text-green-500" />}
+                    title={`Guarde para seu potinho: ${pot.name}`}
+                    description={`Para alcançar sua meta, guarde R$ ${pot.monthlyAmount.toFixed(2).replace('.', ',')} este mês.`}
+                    variant="info"
+                    className="bg-green-500/10 border-green-500/20"
+                />
+            ))}
         </div>}
 
         {pots && pots.length > 0 && <div className="space-y-4">
             <h3 className="font-bold text-lg text-foreground font-headline">Seus Potinhos</h3>
             <div className="grid grid-cols-2 gap-4">
-                {pots.filter(p => p.name.includes('Férias') || p.name.includes('13º')).map((pot, index) => (
+                {pots.filter(p => p.type === 'Mandatory').map((pot, index) => (
                     <div key={pot.id} className="bg-card p-4 rounded-lg shadow-sm flex flex-col items-center justify-center text-center">
                         {pot.name.includes('Férias') ? <Pocket className="w-8 h-8 text-accent mb-2" /> : <DollarSign className="w-8 h-8 text-accent mb-2" />}
                         <span className="font-bold text-lg">R$ {pot.virtualBalance.toFixed(2).replace('.', ',')}</span>

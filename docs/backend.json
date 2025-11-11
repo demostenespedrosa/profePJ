@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -168,6 +169,11 @@
         "status": {
           "type": "string",
           "description": "The status of the DAS payment (e.g., 'Pending', 'Paid', 'Overdue')."
+        },
+        "paymentDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date the DAS was paid."
         }
       },
       "required": ["monthRef", "totalRevenue", "estimatedTaxValue", "status"]
