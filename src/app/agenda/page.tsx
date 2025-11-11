@@ -107,11 +107,9 @@ export default function AgendaPage() {
             <h1 className="text-2xl font-bold font-headline text-foreground">
             Agenda
             </h1>
-            <Link href="/agenda/nova" legacyBehavior>
-              <a className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
+            <Link href="/agenda/nova" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
                 <Plus className="h-6 w-6" />
                 <span className="sr-only">Adicionar evento</span>
-              </a>
             </Link>
       </header>
 
