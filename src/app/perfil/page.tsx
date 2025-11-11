@@ -16,7 +16,7 @@ import Link from "next/link";
 const menuItems = [
     { icon: UserIcon, label: "Meus Dados", href: "/perfil/meus-dados" },
     { icon: School, label: "Instituições de Ensino", href: "/instituicoes" },
-    { icon: Bell, label: "Notificações", href: "#" },
+    { icon: Bell, label: "Notificações", href: "/perfil/notificacoes" },
     { icon: Shield, label: "Segurança", href: "/perfil/seguranca" },
     { icon: HelpCircle, label: "Ajuda", href: "#" },
 ];
