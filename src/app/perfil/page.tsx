@@ -1,3 +1,4 @@
+
 "use client";
 
 import MobileScreen from "@/components/layout/mobile-screen";
@@ -16,7 +17,7 @@ const menuItems = [
     { icon: UserIcon, label: "Meus Dados", href: "/perfil/meus-dados" },
     { icon: School, label: "Instituições de Ensino", href: "/instituicoes" },
     { icon: Bell, label: "Notificações", href: "#" },
-    { icon: Shield, label: "Segurança", href: "#" },
+    { icon: Shield, label: "Segurança", href: "/perfil/seguranca" },
     { icon: HelpCircle, label: "Ajuda", href: "#" },
 ];
 
