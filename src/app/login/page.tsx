@@ -30,6 +30,7 @@ import MobileScreen from "@/components/layout/mobile-screen";
 import { useFirebase } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import Logo from "@/components/profe/logo";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Digite um e-mail válido." }),
@@ -83,6 +84,9 @@ export default function LoginPage() {
   return (
     <MobileScreen>
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="mb-8">
+            <Logo className="h-12 w-auto text-primary" />
+        </div>
         <Card className="w-full max-w-sm">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold font-headline">Bem-vindo(a)!</CardTitle>

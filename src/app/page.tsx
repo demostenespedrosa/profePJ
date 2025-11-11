@@ -20,6 +20,7 @@ import { generateHomeGreeting } from "@/ai/flows/generate-home-greeting";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFirebase, useDoc, useCollection, useMemoFirebase } from "@/firebase";
 import { Lesson } from "@/types";
+import Logo from "@/components/profe/logo";
 
 type UserProfile = {
   name: string;
@@ -165,31 +166,26 @@ export default function Home() {
 
   return (
     <MobileScreen>
-        <header className="sticky top-0 z-10 flex items-center justify-between p-4 bg-background/80 backdrop-blur-sm border-b">
-            <div>
-                 {greeting ? (
-                    <div className="animate-scale-in">
-                        <h1 className="text-2xl font-bold font-headline text-foreground">{greeting.title}</h1>
-                        <p className="text-sm text-muted-foreground">{greeting.subtitle}</p>
-                    </div>
-                  ) : (
-                     <div className="space-y-2">
-                        <Skeleton className="h-8 w-48" />
-                        <Skeleton className="h-5 w-64" />
-                    </div>
-                  )}
-            </div>
-            {userAvatar && <Image
-              src={userAvatar.imageUrl}
-              alt={userAvatar.description}
-              width={40}
-              height={40}
-              className="rounded-full border-2 border-white shadow-lg"
-              data-ai-hint={userAvatar.imageHint}
-            />}
+        <header className="sticky top-0 z-10 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm border-b">
+           <Logo className="h-8 w-auto text-primary" />
         </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
+
+        <div className="text-center py-4">
+             {greeting ? (
+                <div className="animate-scale-in">
+                    <h1 className="text-3xl font-bold font-headline text-foreground">{greeting.title}</h1>
+                    <p className="text-md text-muted-foreground">{greeting.subtitle}</p>
+                </div>
+              ) : (
+                 <div className="space-y-2 flex flex-col items-center">
+                    <Skeleton className="h-8 w-64" />
+                    <Skeleton className="h-5 w-72" />
+                </div>
+              )}
+        </div>
+
 
         <div className="space-y-4">
             <h3 className="font-bold text-lg text-foreground font-headline">Seu Mês em Números 🚀</h3>
