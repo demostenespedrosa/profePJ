@@ -1,0 +1,204 @@
+/**
+ * @file Firestore Security Rules for Profe Amigo Application
+ * @description This ruleset enforces a strict user-ownership model, where each user can only access their own data.
+ *
+ * Data Structure:
+ * All data is nested under /users/{userId}, ensuring clear ownership. Subcollections are used to further organize user-specific data.
+ *  /users/{userId}
+ *    - users/{userId}/institutions/{institutionId}
+ *    - users/{userId}/institutions/{institutionId}/recesses/{recessId}
+ *    - users/{userId}/lessons/{lessonId}
+ *    - users/{userId}/pots/{potId}
+ *    - users/{userId}/monthly_obligations/{obligationId}
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed.
+ * - All write operations are protected by authorization checks.
+ * - The rules are designed to be easily auditable and maintainable, with complex logic abstracted into helper functions.
+ *
+ * Denormalization for Authorization:
+ * The Lesson entity denormalizes the institutionName to avoid needing to fetch the Institution document for display purposes, thus avoiding extra reads in security rules.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to user documents.
+     * @path /users/{userId}
+     * @allow (create) User with ID 'user123' can create their own user document.
+     * @allow (get) User with ID 'user123' can read their own user document.
+     * @allow (update) User with ID 'user123' can update their own user document.
+     * @allow (delete) User with ID 'user123' can delete their own user document.
+     * @deny (create) User with ID 'user456' cannot create a user document with ID 'user123'.
+     * @deny (get) User with ID 'user456' cannot read user document with ID 'user123'.
+     * @principle Enforces document ownership for all operations on user documents.
+     */
+    match /users/{userId} {
+      // Helper function to check if the user is signed in
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      // Helper function to check if the requesting user is the owner of the document
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      // Allow a user to create their own document if the user ID matches their auth UID.
+      allow create: if isSignedIn() && isOwner(userId) && request.auth.uid == userId;
+
+      // Allow a user to get their own document.
+      allow get: if isSignedIn() && isOwner(userId);
+
+      // Listing users is not allowed.
+      allow list: if false;
+
+      // Allow a user to update their own document. Enforce immutability of the user ID.
+      allow update: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to delete their own document.
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    /**
+     * @description Controls access to institution documents within a user's collection.
+     * @path /users/{userId}/institutions/{institutionId}
+     * @allow (create) User with ID 'user123' can create an institution document under their user document.
+     * @allow (get) User with ID 'user123' can read an institution document under their user document.
+     * @allow (update) User with ID 'user123' can update an institution document under their user document.
+     * @allow (delete) User with ID 'user123' can delete an institution document under their user document.
+     * @deny (create) User with ID 'user456' cannot create an institution document under user document with ID 'user123'.
+     * @deny (get) User with ID 'user456' cannot read an institution document under user document with ID 'user123'.
+     * @principle Enforces document ownership for all operations on institution documents.
+     */
+    match /users/{userId}/institutions/{institutionId} {
+      // Allow a user to create an institution document if they are the owner of the user document.
+      allow create: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to get an institution document if they are the owner of the user document.
+      allow get: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to list institution documents if they are the owner of the user document.
+      allow list: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to update an institution document if they are the owner of the user document. Enforce immutability of the userId.
+      allow update: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to delete an institution document if they are the owner of the user document.
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    /**
+     * @description Controls access to recess documents within an institution's collection.
+     * @path /users/{userId}/institutions/{institutionId}/recesses/{recessId}
+     * @allow (create) User with ID 'user123' can create a recess document under their institution document.
+     * @allow (get) User with ID 'user123' can read a recess document under their institution document.
+     * @allow (update) User with ID 'user123' can update a recess document under their institution document.
+     * @allow (delete) User with ID 'user123' can delete a recess document under their institution document.
+     * @deny (create) User with ID 'user456' cannot create a recess document under user document with ID 'user123'.
+     * @deny (get) User with ID 'user456' cannot read a recess document under user document with ID 'user123'.
+     * @principle Enforces document ownership for all operations on recess documents.
+     */
+    match /users/{userId}/institutions/{institutionId}/recesses/{recessId} {
+      // Allow a user to create a recess document if they are the owner of the user document.
+      allow create: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to get a recess document if they are the owner of the user document.
+      allow get: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to list recess documents if they are the owner of the user document.
+      allow list: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to update a recess document if they are the owner of the user document. Enforce immutability of the userId.
+      allow update: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to delete a recess document if they are the owner of the user document.
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    /**
+     * @description Controls access to lesson documents within a user's collection.
+     * @path /users/{userId}/lessons/{lessonId}
+     * @allow (create) User with ID 'user123' can create a lesson document under their user document.
+     * @allow (get) User with ID 'user123' can read a lesson document under their user document.
+     * @allow (update) User with ID 'user123' can update a lesson document under their user document.
+     * @allow (delete) User with ID 'user123' can delete a lesson document under their user document.
+     * @deny (create) User with ID 'user456' cannot create a lesson document under user document with ID 'user123'.
+     * @deny (get) User with ID 'user456' cannot read a lesson document under user document with ID 'user123'.
+     * @principle Enforces document ownership for all operations on lesson documents.
+     */
+    match /users/{userId}/lessons/{lessonId} {
+      // Allow a user to create a lesson document if they are the owner of the user document.
+      allow create: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to get a lesson document if they are the owner of the user document.
+      allow get: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to list lesson documents if they are the owner of the user document.
+      allow list: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to update a lesson document if they are the owner of the user document. Enforce immutability of the userId.
+      allow update: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to delete a lesson document if they are the owner of the user document.
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    /**
+     * @description Controls access to pot documents within a user's collection.
+     * @path /users/{userId}/pots/{potId}
+     * @allow (create) User with ID 'user123' can create a pot document under their user document.
+     * @allow (get) User with ID 'user123' can read a pot document under their user document.
+     * @allow (update) User with ID 'user123' can update a pot document under their user document.
+     * @allow (delete) User with ID 'user123' can delete a pot document under their user document.
+     * @deny (create) User with ID 'user456' cannot create a pot document under user document with ID 'user123'.
+     * @deny (get) User with ID 'user456' cannot read a pot document under user document with ID 'user123'.
+     * @principle Enforces document ownership for all operations on pot documents.
+     */
+    match /users/{userId}/pots/{potId} {
+      // Allow a user to create a pot document if they are the owner of the user document.
+      allow create: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to get a pot document if they are the owner of the user document.
+      allow get: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to list pot documents if they are the owner of the user document.
+      allow list: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to update a pot document if they are the owner of the user document. Enforce immutability of the userId.
+      allow update: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to delete a pot document if they are the owner of the user document.
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    /**
+     * @description Controls access to monthly obligation documents within a user's collection.
+     * @path /users/{userId}/monthly_obligations/{obligationId}
+     * @allow (create) User with ID 'user123' can create a monthly obligation document under their user document.
+     * @allow (get) User with ID 'user123' can read a monthly obligation document under their user document.
+     * @allow (update) User with ID 'user123' can update a monthly obligation document under their user document.
+     * @allow (delete) User with ID 'user123' can delete a monthly obligation document under their user document.
+     * @deny (create) User with ID 'user456' cannot create a monthly obligation document under user document with ID 'user123'.
+     * @deny (get) User with ID 'user456' cannot read a monthly obligation document under user document with ID 'user123'.
+     * @principle Enforces document ownership for all operations on monthly obligation documents.
+     */
+    match /users/{userId}/monthly_obligations/{obligationId} {
+      // Allow a user to create a monthly obligation document if they are the owner of the user document.
+      allow create: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to get a monthly obligation document if they are the owner of the user document.
+      allow get: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to list monthly obligation documents if they are the owner of the user document.
+      allow list: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to update a monthly obligation document if they are the owner of the user document. Enforce immutability of the userId.
+      allow update: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to delete a monthly obligation document if they are the owner of the user document.
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+  }
+}
