@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,8 +11,6 @@ import MobileScreen from "@/components/layout/mobile-screen";
 import BottomNav from "@/components/layout/bottom-nav";
 import { DayContent, DayProps } from "react-day-picker";
 import { format } from "date-fns";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
-import NewLessonForm from "./_components/new-lesson-form";
 
 // Mock data, to be replaced by dynamic data later
 const lessonsByDay = {
@@ -26,13 +25,6 @@ const lessonsByDay = {
         { id: 4, time: "09:00", school: "Escola XYZ", value: "R$ 65,00", color: "#F87171" }, // red-400
     ],
 };
-
-const schools = [
-    { id: 1, name: "Escola ABC", color: "#34D399" },
-    { id: 2, name: "Escola XYZ", color: "#F87171" },
-    { id: 3, name: "Escola 123", color: "#60A5FA" },
-];
-
 
 function DayWithDots(props: DayProps) {
   const dateStr = format(props.date, 'yyyy-MM-dd');
@@ -60,17 +52,10 @@ function DayWithDots(props: DayProps) {
 
 export default function AgendaPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const selectedDateStr = date ? format(date, 'yyyy-MM-dd') : '';
   // @ts-ignore
   const scheduledLessons = lessonsByDay[selectedDateStr] || [];
-
-  const handleAddLesson = (values: any) => {
-    console.log("New lesson(s):", values);
-    // Here you would typically update your state or call an API
-    setIsFormOpen(false);
-  }
 
   return (
     <MobileScreen>
@@ -78,25 +63,14 @@ export default function AgendaPage() {
             <h1 className="text-2xl font-bold font-headline text-foreground">
             Agenda
             </h1>
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="icon">
+            <Link href="/agenda/nova">
+              <Button variant="ghost" size="icon" asChild>
+                <span>
                     <Plus className="h-6 w-6" />
                     <span className="sr-only">Adicionar evento</span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                  <DialogHeader>
-                      <DialogTitle>Agendar Aulas</DialogTitle>
-                      <DialogDescription>Selecione o tipo de agendamento e preencha os detalhes.</DialogDescription>
-                  </DialogHeader>
-                  <NewLessonForm 
-                    schools={schools}
-                    onSubmit={handleAddLesson} 
-                    onCancel={() => setIsFormOpen(false)} 
-                   />
-              </DialogContent>
-            </Dialog>
+                </span>
+              </Button>
+            </Link>
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6">

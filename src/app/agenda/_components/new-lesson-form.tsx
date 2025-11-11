@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { CalendarIcon } from "lucide-react";
@@ -24,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
@@ -212,10 +211,10 @@ export default function NewLessonForm({ schools, onSubmit, onCancel }: NewLesson
             />
         </div>
 
-        <DialogFooter>
+        <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
             <Button type="submit">Agendar</Button>
-        </DialogFooter>
+        </div>
       </form>
     </Form>
   );
