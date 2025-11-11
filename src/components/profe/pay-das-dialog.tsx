@@ -47,7 +47,7 @@ export default function PayDasDialog({ open, onOpenChange }: PayDasDialogProps) 
             </div>
             <h2 className="text-2xl font-bold mt-4 font-headline">Derrote o Monstro do DAS!</h2>
             <p className="text-muted-foreground mt-2 mb-6">
-              O boleto chato do DAS no valor de <span className="font-bold text-foreground">R$ 68,00</span> vence em 3 dias. Já pagou?
+              O boleto chato do DAS no valor de <span className="font-bold text-foreground">R$ 82,00</span> vence em 3 dias. Já pagou?
             </p>
             <Button onClick={handleDefeat} className="w-full font-bold bg-destructive hover:bg-destructive/90 text-destructive-foreground text-lg h-12">
               JÁ PAGUEI! DERROTEI! ⚔️
