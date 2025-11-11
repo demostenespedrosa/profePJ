@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/form";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { format } from 'date-fns';
 
 const formSchema = z.object({
   startDate: z.coerce.date({
@@ -36,6 +35,13 @@ type AddRecessFormProps = {
   onSubmit: (values: z.infer<typeof formSchema>) => void;
   onCancel: () => void;
 }
+
+// Helper para formatar a data para o input (lidando com o fuso)
+const formatDateForInput = (date: Date | undefined): string => {
+    if (!date || isNaN(date.getTime())) return '';
+    // Use toISOString e pegue apenas a parte da data para evitar problemas de fuso horário.
+    return date.toISOString().split('T')[0];
+};
 
 export default function AddRecessForm({ onSubmit, onCancel }: AddRecessFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
@@ -65,12 +71,11 @@ export default function AddRecessForm({ onSubmit, onCancel }: AddRecessFormProps
                 <FormLabel>Início do Recesso</FormLabel>
                 <FormControl>
                   <Input 
-                    type="date" 
-                    value={field.value instanceof Date && !isNaN(field.value.getTime()) ? format(field.value, 'yyyy-MM-dd') : ''}
-                    onChange={(e) => field.onChange(e.target.valueAsDate)}
-                    onBlur={field.onBlur}
-                    ref={field.ref}
-                    name={field.name}
+                    type="date"
+                    {...field}
+                    // O valor do field já é gerenciado pelo react-hook-form.
+                    // A conversão é feita pelo z.coerce.date
+                    value={field.value ? formatDateForInput(field.value) : ''}
                   />
                 </FormControl>
                 <FormMessage />
@@ -86,12 +91,9 @@ export default function AddRecessForm({ onSubmit, onCancel }: AddRecessFormProps
                  <FormControl>
                   <Input 
                     type="date" 
-                    value={field.value instanceof Date && !isNaN(field.value.getTime()) ? format(field.value, 'yyyy-MM-dd') : ''}
-                    onChange={(e) => field.onChange(e.target.valueAsDate)}
-                    onBlur={field.onBlur}
-                    ref={field.ref}
-                    name={field.name}
-                    min={startDateValue instanceof Date ? format(startDateValue, 'yyyy-MM-dd') : undefined}
+                    {...field}
+                    value={field.value ? formatDateForInput(field.value) : ''}
+                    min={startDateValue ? formatDateForInput(startDateValue) : undefined}
                    />
                 </FormControl>
                 <FormMessage />
