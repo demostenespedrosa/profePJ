@@ -19,12 +19,15 @@ import { Input } from "@/components/ui/input";
 const formSchema = z.object({
   startDate: z.coerce.date({
     required_error: "A data de início é obrigatória.",
+    invalid_type_error: "Formato de data inválido.",
   }),
   endDate: z.coerce.date({
     required_error: "A data de fim é obrigatória.",
+    invalid_type_error: "Formato de data inválido.",
   }),
 }).refine((data) => {
-    if (!data.startDate || !data.endDate) return true;
+    // A coerção pode resultar em datas inválidas se a string for vazia.
+    if (!data.startDate || !data.endDate || isNaN(data.startDate.getTime()) || isNaN(data.endDate.getTime())) return true;
     return data.endDate > data.startDate;
 }, {
   message: "A data final deve ser posterior à data inicial.",
@@ -36,19 +39,13 @@ type AddRecessFormProps = {
   onCancel: () => void;
 }
 
-// Helper para formatar a data para o input (lidando com o fuso)
-const formatDateForInput = (date: Date | undefined): string => {
-    if (!date || isNaN(date.getTime())) return '';
-    // Use toISOString e pegue apenas a parte da data para evitar problemas de fuso horário.
-    return date.toISOString().split('T')[0];
-};
-
 export default function AddRecessForm({ onSubmit, onCancel }: AddRecessFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    // Use strings vazias para inputs de texto/data. `undefined` pode causar problemas.
     defaultValues: {
-        startDate: undefined,
-        endDate: undefined,
+      startDate: '' as any,
+      endDate: '' as any,
     }
   });
 
@@ -56,8 +53,12 @@ export default function AddRecessForm({ onSubmit, onCancel }: AddRecessFormProps
     onSubmit(values);
     form.reset();
   }
-
-  const startDateValue = form.watch("startDate");
+  
+  const startDateString = form.watch("startDate") as any;
+  const minEndDate = startDateString ? new Date(startDateString) : undefined;
+  if(minEndDate) {
+    minEndDate.setDate(minEndDate.getDate() + 1);
+  }
 
   return (
     <Form {...form}>
@@ -73,9 +74,6 @@ export default function AddRecessForm({ onSubmit, onCancel }: AddRecessFormProps
                   <Input 
                     type="date"
                     {...field}
-                    // O valor do field já é gerenciado pelo react-hook-form.
-                    // A conversão é feita pelo z.coerce.date
-                    value={field.value ? formatDateForInput(field.value) : ''}
                   />
                 </FormControl>
                 <FormMessage />
@@ -92,8 +90,7 @@ export default function AddRecessForm({ onSubmit, onCancel }: AddRecessFormProps
                   <Input 
                     type="date" 
                     {...field}
-                    value={field.value ? formatDateForInput(field.value) : ''}
-                    min={startDateValue ? formatDateForInput(startDateValue) : undefined}
+                    min={minEndDate?.toISOString().split('T')[0]}
                    />
                 </FormControl>
                 <FormMessage />
