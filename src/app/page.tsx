@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { DollarSign, Pocket, Star, Calendar, TrendingUp, Smile, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { collection, doc } from "firebase/firestore";
-import { differenceInDays, isSameMonth, startOfMonth, endOfMonth, isAfter, isToday, parseISO } from "date-fns";
+import { differenceInDays, isSameMonth, startOfMonth, endOfMonth, isAfter, isToday, parseISO, format } from "date-fns";
 
 import MobileScreen from "@/components/layout/mobile-screen";
 import ActionCard from "@/components/profe/action-card";
@@ -47,6 +47,11 @@ type Institution = {
     recessEnd?: string;
 };
 
+type MonthlyObligation = {
+    id: string;
+    status: 'Pending' | 'Paid' | 'Overdue';
+}
+
 
 export default function Home() {
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
@@ -61,14 +66,16 @@ export default function Home() {
   const lessonsColRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/lessons`) : null, [firestore, user]);
   const potsColRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/pots`) : null, [firestore, user]);
   const institutionsColRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/institutions`) : null, [firestore, user]);
+  const monthlyObligationsColRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/monthly_obligations`) : null, [firestore, user]);
 
   // Fetch data
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
   const { data: lessons, isLoading: areLessonsLoading } = useCollection<Lesson>(lessonsColRef);
   const { data: pots, isLoading: arePotsLoading } = useCollection<Pot>(potsColRef);
   const { data: institutions, isLoading: areInstitutionsLoading } = useCollection<Institution>(institutionsColRef);
+  const { data: monthlyObligations, isLoading: areObligationsLoading, refetch: refetchObligations } = useCollection<MonthlyObligation>(monthlyObligationsColRef);
 
-  const isLoading = isUserLoading || isProfileLoading || areLessonsLoading || arePotsLoading || areInstitutionsLoading;
+  const isLoading = isUserLoading || isProfileLoading || areLessonsLoading || arePotsLoading || areInstitutionsLoading || areObligationsLoading;
 
   const monthlyStats = useMemo(() => {
     if (!lessons) return { totalLessons: 0, totalValue: 0 };
@@ -97,6 +104,18 @@ export default function Home() {
     const daysUntilDue = differenceInDays(dueDate, today);
     return { daysUntilDue };
   }, [userProfile]);
+
+  const showDasCard = useMemo(() => {
+    if (!dasDueDateInfo || !monthlyObligations) return false;
+    
+    // Check if DAS for the current month is already paid
+    const currentMonthId = format(new Date(), "yyyy-MM");
+    const isPaid = monthlyObligations.some(ob => ob.id === currentMonthId && ob.status === 'Paid');
+
+    // Show card if not paid and it's 3 days or less until the due date
+    return !isPaid && dasDueDateInfo.daysUntilDue >= 0 && dasDueDateInfo.daysUntilDue <= 3;
+
+  }, [dasDueDateInfo, monthlyObligations]);
 
   const recessAlert = useMemo(() => {
     if (!institutions) return null;
@@ -205,7 +224,7 @@ export default function Home() {
             </div>
         </div>
 
-        {(nextLesson || dasDueDateInfo) && <div className="space-y-4">
+        {(nextLesson || showDasCard) && <div className="space-y-4">
             <h3 className="font-bold text-lg text-foreground font-headline">Sua vez de agir!</h3>
             {nextLesson && (
                 <ActionCard
@@ -218,7 +237,7 @@ export default function Home() {
                     ctaClassName="bg-primary hover:bg-primary/90 text-primary-foreground"
                 />
             )}
-            {dasDueDateInfo && dasDueDateInfo.daysUntilDue <= 5 && (
+            {showDasCard && dasDueDateInfo && (
                 <ActionCard
                     icon={<MonsterIcon className="w-8 h-8 text-destructive" />}
                     title="MISSÃO DO MÊS"
@@ -259,7 +278,14 @@ export default function Home() {
       </main>
 
       <CompleteLessonDialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen} />
-      <PayDasDialog open={dasDialogOpen} onOpenChange={setDasDialogOpen} />
+      {dasDueDateInfo && 
+        <PayDasDialog 
+          open={dasDialogOpen} 
+          onOpenChange={setDasDialogOpen} 
+          onPaymentConfirmed={() => refetchObligations && refetchObligations()}
+          daysUntilDue={dasDueDateInfo.daysUntilDue}
+        />
+      }
 
       <BottomNav />
     </MobileScreen>

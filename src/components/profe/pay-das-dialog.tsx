@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,14 +12,22 @@ import {
 import { Button } from "@/components/ui/button";
 import MonsterIcon from "@/components/icons/monster-icon";
 import Confetti from "./confetti";
+import { useFirebase } from "@/firebase";
+import { doc, setDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 interface PayDasDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onPaymentConfirmed: () => void;
+  daysUntilDue: number;
 }
 
-export default function PayDasDialog({ open, onOpenChange }: PayDasDialogProps) {
+export default function PayDasDialog({ open, onOpenChange, onPaymentConfirmed, daysUntilDue }: PayDasDialogProps) {
   const [defeated, setDefeated] = useState(false);
+  const { user, firestore } = useFirebase();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Reset state when dialog is closed
@@ -27,17 +36,43 @@ export default function PayDasDialog({ open, onOpenChange }: PayDasDialogProps) 
     }
   }, [open]);
 
-  const handleDefeat = () => {
+  const handleDefeat = async () => {
+    if (!user) return;
     // TODO: Add haptic feedback
     setDefeated(true);
+
+    try {
+      const today = new Date();
+      const obligationId = format(today, "yyyy-MM");
+      const monthRef = format(today, "MMMM/yyyy");
+      const obligationRef = doc(firestore, `users/${user.uid}/monthly_obligations/${obligationId}`);
+
+      await setDoc(obligationRef, {
+        monthRef: monthRef,
+        status: 'Paid',
+        paymentDate: today.toISOString(),
+        totalRevenue: 0, // This could be calculated in a more complex app
+        estimatedTaxValue: 82.00, // The fixed value
+      });
+      
+      onPaymentConfirmed();
+
+    } catch (error) {
+       toast({
+        variant: "destructive",
+        title: "Erro ao salvar",
+        description: "Não foi possível registrar o pagamento. Tente novamente.",
+      });
+       console.error("Error saving DAS payment:", error);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm text-center p-8">
-        <DialogHeader className="sr-only">
-          <DialogTitle>Confirmar Pagamento do DAS</DialogTitle>
-          <DialogDescription>Uma tela para confirmar que você pagou o imposto mensal do DAS e derrotar o "monstro".</DialogDescription>
+        <DialogHeader>
+          <DialogTitle className="sr-only">Confirmar Pagamento do DAS</DialogTitle>
+          <DialogDescription className="sr-only">Uma tela para confirmar que você pagou o imposto mensal do DAS e derrotar o "monstro".</DialogDescription>
         </DialogHeader>
         {defeated && <Confetti />}
         {!defeated ? (
@@ -47,7 +82,7 @@ export default function PayDasDialog({ open, onOpenChange }: PayDasDialogProps) 
             </div>
             <h2 className="text-2xl font-bold mt-4 font-headline">Derrote o Monstro do DAS!</h2>
             <p className="text-muted-foreground mt-2 mb-6">
-              O boleto chato do DAS no valor de <span className="font-bold text-foreground">R$ 82,00</span> vence em 3 dias. Já pagou?
+              O boleto chato do DAS no valor de <span className="font-bold text-foreground">R$ 82,00</span> vence em {daysUntilDue} dia(s). Já pagou?
             </p>
             <Button onClick={handleDefeat} className="w-full font-bold bg-destructive hover:bg-destructive/90 text-destructive-foreground text-lg h-12">
               JÁ PAGUEI! DERROTEI! ⚔️
