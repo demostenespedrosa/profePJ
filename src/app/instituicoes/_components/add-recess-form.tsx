@@ -24,7 +24,10 @@ const formSchema = z.object({
   endDate: z.coerce.date({
     required_error: "A data de fim é obrigatória.",
   }),
-}).refine((data) => data.endDate > data.startDate, {
+}).refine((data) => {
+    if (!data.startDate || !data.endDate) return true;
+    return data.endDate > data.startDate;
+}, {
   message: "A data final deve ser posterior à data inicial.",
   path: ["endDate"], 
 });
@@ -37,12 +40,18 @@ type AddRecessFormProps = {
 export default function AddRecessForm({ onSubmit, onCancel }: AddRecessFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+        startDate: undefined,
+        endDate: undefined,
+    }
   });
 
   function handleSubmit(values: z.infer<typeof formSchema>) {
     onSubmit(values);
     form.reset();
   }
+
+  const startDateValue = form.watch("startDate");
 
   return (
     <Form {...form}>
@@ -55,7 +64,14 @@ export default function AddRecessForm({ onSubmit, onCancel }: AddRecessFormProps
                 <FormItem className="flex flex-col">
                 <FormLabel>Início do Recesso</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} value={field.value instanceof Date ? format(field.value, 'yyyy-MM-dd') : ''} />
+                  <Input 
+                    type="date" 
+                    value={field.value instanceof Date && !isNaN(field.value.getTime()) ? format(field.value, 'yyyy-MM-dd') : ''}
+                    onChange={(e) => field.onChange(e.target.valueAsDate)}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    name={field.name}
+                  />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -68,7 +84,15 @@ export default function AddRecessForm({ onSubmit, onCancel }: AddRecessFormProps
                 <FormItem className="flex flex-col">
                 <FormLabel>Fim do Recesso</FormLabel>
                  <FormControl>
-                  <Input type="date" {...field} value={field.value instanceof Date ? format(field.value, 'yyyy-MM-dd') : ''} min={form.getValues("startDate") instanceof Date ? format(form.getValues("startDate"), 'yyyy-MM-dd') : undefined} />
+                  <Input 
+                    type="date" 
+                    value={field.value instanceof Date && !isNaN(field.value.getTime()) ? format(field.value, 'yyyy-MM-dd') : ''}
+                    onChange={(e) => field.onChange(e.target.valueAsDate)}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    name={field.name}
+                    min={startDateValue instanceof Date ? format(startDateValue, 'yyyy-MM-dd') : undefined}
+                   />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
