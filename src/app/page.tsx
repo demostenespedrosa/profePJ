@@ -1,83 +1,124 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from 'next/image';
-import { DollarSign, Pocket, Smile, Star, Calendar, TrendingUp, LogOut } from "lucide-react";
+import { DollarSign, Pocket, Star, Calendar, TrendingUp, Smile, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { collection, doc } from "firebase/firestore";
+import { differenceInDays, isSameMonth, startOfMonth, endOfMonth, isAfter, isToday, parseISO } from "date-fns";
 
 import MobileScreen from "@/components/layout/mobile-screen";
 import ActionCard from "@/components/profe/action-card";
 import CompleteLessonDialog from "@/components/profe/complete-lesson-dialog";
 import PayDasDialog from "@/components/profe/pay-das-dialog";
 import BottomNav from "@/components/layout/bottom-nav";
-import { Badge } from "@/components/ui/badge";
 import MonsterIcon from "@/components/icons/monster-icon";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { generateHomeGreeting } from "@/ai/flows/generate-home-greeting";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useFirebase } from "@/firebase";
-import { signOut } from "firebase/auth";
-import { Button } from "@/components/ui/button";
+import { useFirebase, useDoc, useCollection, useMemoFirebase } from "@/firebase";
+import { Lesson } from "@/types";
 
-
-// Mock data, to be replaced by dynamic data later
-const lessonsByDay = {
-    '2024-07-15': [
-        { id: 1, time: "10:00", school: "Escola ABC", value: 50, color: "#34D399" },
-    ],
-    '2024-07-18': [
-        { id: 2, time: "14:00", school: "Escola XYZ", value: 65, color: "#F87171" },
-        { id: 3, time: "16:00", school: "Escola 123", value: 75, color: "#60A5FA" },
-    ],
-    '2024-07-25': [
-        { id: 4, time: "09:00", school: "Escola XYZ", value: 65, color: "#F87171" },
-    ],
-     '2024-08-05': [
-        { id: 5, time: "09:00", school: "Escola ABC", value: 50, color: "#34D399" },
-    ],
+type UserProfile = {
+  name: string;
+  email: string;
+  dasDueDate: number;
+  streakDays: number;
+  xpTotal: number;
 };
 
-const streakDays = 5;
+type Pot = {
+  id: string;
+  name: string;
+  virtualBalance: number;
+  goal: number;
+  allocationPercentage: number;
+};
+
+type Institution = {
+    id: string;
+    name: string;
+    hourlyRate: number;
+    color: string;
+    recessStart?: string;
+    recessEnd?: string;
+};
 
 
 export default function Home() {
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
   const [dasDialogOpen, setDasDialogOpen] = useState(false);
-  const [monthlyStats, setMonthlyStats] = useState({ totalLessons: 0, totalValue: 0 });
   const [greeting, setGreeting] = useState<{ title: string; subtitle: string } | null>(null);
   
-  const { user, auth, isUserLoading } = useFirebase();
+  const { user, firestore, isUserLoading } = useFirebase();
   const router = useRouter();
 
-  useEffect(() => {
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
+  // Memoize Firestore references
+  const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
+  const lessonsColRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/lessons`) : null, [firestore, user]);
+  const potsColRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/pots`) : null, [firestore, user]);
+  const institutionsColRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/institutions`) : null, [firestore, user]);
 
-    let totalLessons = 0;
-    let totalValue = 0;
+  // Fetch data
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
+  const { data: lessons, isLoading: areLessonsLoading } = useCollection<Lesson>(lessonsColRef);
+  const { data: pots, isLoading: arePotsLoading } = useCollection<Pot>(potsColRef);
+  const { data: institutions, isLoading: areInstitutionsLoading } = useCollection<Institution>(institutionsColRef);
 
-    Object.keys(lessonsByDay).forEach(dateStr => {
-        const date = new Date(dateStr);
-        if(date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
-            // @ts-ignore
-            const lessons = lessonsByDay[dateStr];
-            totalLessons += lessons.length;
-            totalValue += lessons.reduce((acc: number, lesson: { value: number; }) => acc + lesson.value, 0);
-        }
+  const isLoading = isUserLoading || isProfileLoading || areLessonsLoading || arePotsLoading || areInstitutionsLoading;
+
+  const monthlyStats = useMemo(() => {
+    if (!lessons) return { totalLessons: 0, totalValue: 0 };
+    
+    const today = new Date();
+    const currentMonthLessons = lessons.filter(lesson => isSameMonth(parseISO(lesson.startTime), today));
+    
+    const totalLessons = currentMonthLessons.length;
+    const totalValue = currentMonthLessons.reduce((acc, lesson) => acc + lesson.totalValue, 0);
+
+    return { totalLessons, totalValue };
+  }, [lessons]);
+
+  const nextLesson = useMemo(() => {
+    if (!lessons) return null;
+    const sortedLessons = [...lessons].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    const now = new Date();
+    return sortedLessons.find(lesson => isAfter(new Date(lesson.startTime), now) || isToday(new Date(lesson.startTime))) || null;
+  }, [lessons]);
+
+
+  const dasDueDateInfo = useMemo(() => {
+    if (!userProfile) return null;
+    const today = new Date();
+    const dueDate = new Date(today.getFullYear(), today.getMonth(), userProfile.dasDueDate);
+    const daysUntilDue = differenceInDays(dueDate, today);
+    return { daysUntilDue };
+  }, [userProfile]);
+
+  const recessAlert = useMemo(() => {
+    if (!institutions) return null;
+    const today = new Date();
+    const upcomingRecess = institutions.find(inst => {
+      if (!inst.recessStart) return false;
+      const recessStartDate = parseISO(inst.recessStart);
+      const daysUntilRecess = differenceInDays(recessStartDate, today);
+      return daysUntilRecess > 0 && daysUntilRecess <= 30; // Alert for recesses within 30 days
     });
+    return upcomingRecess;
+  }, [institutions]);
 
-    setMonthlyStats({ totalLessons, totalValue });
 
+  useEffect(() => {
     async function fetchGreeting() {
-      if (!user) return;
+      if (!user || !userProfile || areLessonsLoading) return;
       try {
         const response = await generateHomeGreeting({
           userName: user.displayName || 'Professor(a)',
-          streakDays: streakDays,
-          monthlyLessons: totalLessons,
-          monthlyEarnings: totalValue,
+          streakDays: userProfile.streakDays || 0,
+          monthlyLessons: monthlyStats.totalLessons,
+          monthlyEarnings: monthlyStats.totalValue,
         });
         setGreeting({
           title: response.greetingTitle,
@@ -94,23 +135,30 @@ export default function Home() {
     }
 
     fetchGreeting();
-  }, [user]);
+  }, [user, userProfile, areLessonsLoading, monthlyStats]);
 
-  const handleLogout = async () => {
-    await signOut(auth);
-    // Remove cookie
-    document.cookie = 'firebase-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    router.push('/login');
-  }
 
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');
 
-  if (isUserLoading || !user) {
+  if (isLoading) {
     return (
         <MobileScreen>
-            <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center justify-center h-full p-4 space-y-8">
                 <Skeleton className="w-24 h-24 rounded-full" />
+                <div className="w-full space-y-2">
+                    <Skeleton className="h-8 w-3/4 mx-auto" />
+                    <Skeleton className="h-5 w-1/2 mx-auto" />
+                </div>
+                 <div className="w-full grid grid-cols-2 gap-4">
+                    <Skeleton className="h-28 w-full" />
+                    <Skeleton className="h-28 w-full" />
+                </div>
+                <div className="w-full space-y-4">
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                </div>
             </div>
+             <BottomNav />
         </MobileScreen>
     )
   }
@@ -119,41 +167,29 @@ export default function Home() {
     <MobileScreen>
         <header className="sticky top-0 z-10 flex items-center justify-between p-4 bg-background/80 backdrop-blur-sm border-b">
             <div>
-                <h1 className="text-2xl font-bold font-headline text-foreground">
-                Olá, {user?.displayName?.split(' ')[0] || 'Professor(a)'}!
-                </h1>
-                <p className="text-sm text-muted-foreground">Aqui está seu resumo de hoje.</p>
+                 {greeting ? (
+                    <div className="animate-scale-in">
+                        <h1 className="text-2xl font-bold font-headline text-foreground">{greeting.title}</h1>
+                        <p className="text-sm text-muted-foreground">{greeting.subtitle}</p>
+                    </div>
+                  ) : (
+                     <div className="space-y-2">
+                        <Skeleton className="h-8 w-48" />
+                        <Skeleton className="h-5 w-64" />
+                    </div>
+                  )}
             </div>
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
-                <LogOut className="w-5 h-5" />
-            </Button>
-        </header>
-
-
-      <main className="flex-1 overflow-y-auto p-4 space-y-6">
-        <div className="text-center py-6">
-          <div className="inline-block relative mb-4">
-             {userAvatar && <Image
+            {userAvatar && <Image
               src={userAvatar.imageUrl}
               alt={userAvatar.description}
-              width={96}
-              height={96}
-              className="rounded-full border-4 border-white shadow-lg"
+              width={40}
+              height={40}
+              className="rounded-full border-2 border-white shadow-lg"
               data-ai-hint={userAvatar.imageHint}
             />}
-          </div>
-          {greeting ? (
-            <div className="animate-scale-in">
-              <h2 className="text-2xl font-bold font-headline text-foreground">{greeting.title}</h2>
-              <p className="text-muted-foreground">{greeting.subtitle}</p>
-            </div>
-          ) : (
-             <div className="space-y-2">
-                <Skeleton className="h-8 w-3/4 mx-auto" />
-                <Skeleton className="h-5 w-1/2 mx-auto" />
-            </div>
-          )}
-        </div>
+        </header>
+
+      <main className="flex-1 overflow-y-auto p-4 space-y-6">
 
         <div className="space-y-4">
             <h3 className="font-bold text-lg text-foreground font-headline">Seu Mês em Números 🚀</h3>
@@ -173,53 +209,56 @@ export default function Home() {
             </div>
         </div>
 
-        <div className="space-y-4">
+        {(nextLesson || dasDueDateInfo) && <div className="space-y-4">
             <h3 className="font-bold text-lg text-foreground font-headline">Sua vez de agir!</h3>
-            <ActionCard
-                icon={<Star className="text-yellow-400 fill-yellow-400" />}
-                title="Você deu a aula na 'Escola ABC' hoje?"
-                description="Bora receber por mais um dia de trabalho incrível!"
-                ctaText="SIM! CONCLUÍ! 🤑"
-                onCtaClick={() => setLessonDialogOpen(true)}
-                className="bg-primary/10 border-primary/20 hover:border-primary/40"
-                ctaClassName="bg-primary hover:bg-primary/90 text-primary-foreground"
-            />
-            <ActionCard
-                icon={<MonsterIcon className="w-8 h-8 text-destructive" />}
-                title="MISSÃO DO MÊS"
-                description="Derrotar o 'Monstro do DAS'! Ele vence em 3 dias."
-                ctaText="JÁ PAGUEI! DERROTEI! ⚔️"
-                onCtaClick={() => setDasDialogOpen(true)}
-                className="bg-destructive/10 border-destructive/20 hover:border-destructive/40"
-                ctaClassName="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-            />
-        </div>
+            {nextLesson && (
+                <ActionCard
+                    icon={<Star className="text-yellow-400 fill-yellow-400" />}
+                    title={`Você deu a aula na '${nextLesson.institutionName}' hoje?`}
+                    description="Bora receber por mais um dia de trabalho incrível!"
+                    ctaText="SIM! CONCLUÍ! 🤑"
+                    onCtaClick={() => setLessonDialogOpen(true)}
+                    className="bg-primary/10 border-primary/20 hover:border-primary/40"
+                    ctaClassName="bg-primary hover:bg-primary/90 text-primary-foreground"
+                />
+            )}
+            {dasDueDateInfo && dasDueDateInfo.daysUntilDue <= 5 && (
+                <ActionCard
+                    icon={<MonsterIcon className="w-8 h-8 text-destructive" />}
+                    title="MISSÃO DO MÊS"
+                    description={`Derrotar o 'Monstro do DAS'! Ele vence em ${dasDueDateInfo.daysUntilDue} dia(s).`}
+                    ctaText="JÁ PAGUEI! DERROTEI! ⚔️"
+                    onCtaClick={() => setDasDialogOpen(true)}
+                    className="bg-destructive/10 border-destructive/20 hover:border-destructive/40"
+                    ctaClassName="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                />
+            )}
+        </div>}
 
-        <div className="space-y-4">
+        {pots && pots.length > 0 && <div className="space-y-4">
             <h3 className="font-bold text-lg text-foreground font-headline">Seus Potinhos</h3>
             <div className="grid grid-cols-2 gap-4">
-                <div className="bg-card p-4 rounded-lg shadow-sm flex flex-col items-center justify-center text-center">
-                    <Pocket className="w-8 h-8 text-accent mb-2" />
-                    <span className="font-bold text-lg">R$ 780,00</span>
-                    <span className="text-sm text-muted-foreground">Férias 🏖️</span>
-                </div>
-                <div className="bg-card p-4 rounded-lg shadow-sm flex flex-col items-center justify-center text-center">
-                    <DollarSign className="w-8 h-8 text-accent mb-2" />
-                    <span className="font-bold text-lg">R$ 820,50</span>
-                    <span className="text-sm text-muted-foreground">Meu 13º 🎁</span>
-                </div>
+                {pots.filter(p => p.name.includes('Férias') || p.name.includes('13º')).map((pot, index) => (
+                    <div key={pot.id} className="bg-card p-4 rounded-lg shadow-sm flex flex-col items-center justify-center text-center">
+                        {pot.name.includes('Férias') ? <Pocket className="w-8 h-8 text-accent mb-2" /> : <DollarSign className="w-8 h-8 text-accent mb-2" />}
+                        <span className="font-bold text-lg">R$ {pot.virtualBalance.toFixed(2).replace('.', ',')}</span>
+                        <span className="text-sm text-muted-foreground">{pot.name}</span>
+                    </div>
+                ))}
             </div>
-        </div>
-
-        <div className="space-y-4">
-            <h3 className="font-bold text-lg text-foreground font-headline">Alerta do Profe</h3>
-            <ActionCard
-                icon={<Smile className="text-accent" />}
-                title="Recesso à vista!"
-                description="Lembrei que a 'Escola ABC' entra de férias dia 15/12. Mas relaxa! Seu Potinho de Férias está aí pra isso!"
-                variant="info"
-            />
-        </div>
+        </div>}
+        
+        {recessAlert && (
+            <div className="space-y-4">
+                <h3 className="font-bold text-lg text-foreground font-headline">Alerta do Profe</h3>
+                <ActionCard
+                    icon={<Smile className="text-accent" />}
+                    title="Recesso à vista!"
+                    description={`Lembrei que a '${recessAlert.name}' entra de férias dia ${format(parseISO(recessAlert.recessStart!), "dd/MM")}. Mas relaxa! Seu Potinho de Férias está aí pra isso!`}
+                    variant="info"
+                />
+            </div>
+        )}
 
       </main>
 

@@ -25,10 +25,14 @@ export default function PerfilPage() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await signOut(auth);
-    // Remove cookie
-    document.cookie = 'firebase-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    router.push('/login');
+    try {
+        await signOut(auth);
+        // Remove cookie
+        document.cookie = 'firebase-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        router.push('/login');
+    } catch (error) {
+        console.error("Error signing out: ", error);
+    }
   }
 
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');
@@ -36,9 +40,21 @@ export default function PerfilPage() {
   if (isUserLoading || !user) {
     return (
         <MobileScreen>
-            <div className="flex items-center justify-center h-full">
-                <Skeleton className="w-24 h-24 rounded-full" />
-            </div>
+             <header className="sticky top-0 z-10 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm border-b">
+                <h1 className="text-2xl font-bold font-headline text-foreground">
+                Meu Perfil
+                </h1>
+            </header>
+            <main className="flex-1 overflow-y-auto p-4 space-y-6">
+                 <div className="flex flex-col items-center space-y-4 pt-4">
+                    <Skeleton className="w-24 h-24 rounded-full" />
+                    <div className="w-full space-y-2 flex flex-col items-center">
+                        <Skeleton className="h-6 w-32" />
+                        <Skeleton className="h-4 w-48" />
+                    </div>
+                </div>
+            </main>
+            <BottomNav />
         </MobileScreen>
     )
   }

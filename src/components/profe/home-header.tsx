@@ -26,6 +26,7 @@ export default function HomeHeader() {
       </div>
        <Button variant="ghost" size="icon" onClick={handleLogout}>
             <LogOut className="w-5 h-5" />
+            <span className="sr-only">Sair</span>
        </Button>
     </header>
   );
