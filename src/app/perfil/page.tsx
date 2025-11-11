@@ -4,12 +4,13 @@ import MobileScreen from "@/components/layout/mobile-screen";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Bell, ChevronRight, HelpCircle, LogOut, Shield, User as UserIcon } from "lucide-react";
+import { Bell, ChevronRight, HelpCircle, LogOut, School, Shield, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const menuItems = [
     { icon: UserIcon, label: "Meus Dados", href: "#" },
+    { icon: School, label: "Instituições de Ensino", href: "/instituicoes" },
     { icon: Bell, label: "Notificações", href: "#" },
     { icon: Shield, label: "Segurança", href: "#" },
     { icon: HelpCircle, label: "Ajuda", href: "#" },
