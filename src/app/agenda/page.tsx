@@ -1,10 +1,8 @@
 "use client";
 
-import MobileScreen from "@/components/layout/mobile-screen";
-import BottomNav from "@/components/layout/bottom-nav";
 import { Calendar } from "@/components/ui/calendar";
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ptBR } from "date-fns/locale";
@@ -18,7 +16,7 @@ export default function AgendaPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
 
   return (
-    <MobileScreen>
+    <>
         <header className="sticky top-0 z-10 flex items-center justify-between p-4 bg-background/80 backdrop-blur-sm border-b">
             <h1 className="text-2xl font-bold font-headline text-foreground">
             Agenda
@@ -37,7 +35,7 @@ export default function AgendaPage() {
                     selected={date}
                     onSelect={setDate}
                     locale={ptBR}
-                    className="w-full"
+                    className="p-4"
                     classNames={{
                         day_selected: "bg-primary text-primary-foreground hover:bg-primary/90 focus:bg-primary/90",
                         day_today: "bg-accent/50 text-accent-foreground",
@@ -76,7 +74,6 @@ export default function AgendaPage() {
         </div>
       </main>
 
-      <BottomNav />
-    </MobileScreen>
+    </>
   );
 }
