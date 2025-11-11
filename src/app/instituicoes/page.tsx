@@ -24,24 +24,24 @@ const initialSchools = [
         name: "Escola ABC",
         hourlyRate: 50,
         color: "#34D399",
-        recessStart: new Date("2024-12-15"),
-        recessEnd: new Date("2025-01-05"),
+        recessStart: new Date("2024-12-15T00:00:00"),
+        recessEnd: new Date("2025-01-05T00:00:00"),
     },
     {
         id: 2,
         name: "Escola XYZ",
         hourlyRate: 65,
         color: "#F87171",
-        recessStart: new Date("2024-12-20"),
-        recessEnd: new Date("2025-01-10"),
+        recessStart: new Date("2024-12-20T00:00:00"),
+        recessEnd: new Date("2025-01-10T00:00:00"),
     },
     {
         id: 3,
         name: "Escola 123",
         hourlyRate: 75,
         color: "#60A5FA",
-        recessStart: new Date("2024-07-01"),
-        recessEnd: new Date("2024-07-31"),
+        recessStart: new Date("2024-07-01T00:00:00"),
+        recessEnd: new Date("2024-07-31T00:00:00"),
     }
 ];
 
