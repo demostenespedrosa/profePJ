@@ -1,7 +1,7 @@
 "use client";
 
-import { Calendar } from "@/components/ui/calendar";
 import { useState } from "react";
+import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -10,7 +10,10 @@ import MobileScreen from "@/components/layout/mobile-screen";
 import BottomNav from "@/components/layout/bottom-nav";
 import { DayContent, DayProps } from "react-day-picker";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import NewLessonForm from "./_components/new-lesson-form";
 
+// Mock data, to be replaced by dynamic data later
 const lessonsByDay = {
     '2024-07-15': [
         { id: 1, time: "10:00", school: "Escola ABC", value: "R$ 50,00", color: "#34D399" }, // green-400
@@ -24,10 +27,17 @@ const lessonsByDay = {
     ],
 };
 
+const schools = [
+    { id: 1, name: "Escola ABC", color: "#34D399" },
+    { id: 2, name: "Escola XYZ", color: "#F87171" },
+    { id: 3, name: "Escola 123", color: "#60A5FA" },
+];
+
 
 function DayWithDots(props: DayProps) {
   const dateStr = format(props.date, 'yyyy-MM-dd');
-  const lessons = lessonsByDay[dateStr as keyof typeof lessonsByDay];
+  // @ts-ignore
+  const lessons = lessonsByDay[dateStr];
   
   return (
     <div className="relative">
@@ -50,9 +60,17 @@ function DayWithDots(props: DayProps) {
 
 export default function AgendaPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   const selectedDateStr = date ? format(date, 'yyyy-MM-dd') : '';
-  const scheduledLessons = lessonsByDay[selectedDateStr as keyof typeof lessonsByDay] || [];
+  // @ts-ignore
+  const scheduledLessons = lessonsByDay[selectedDateStr] || [];
+
+  const handleAddLesson = (values: any) => {
+    console.log("New lesson(s):", values);
+    // Here you would typically update your state or call an API
+    setIsFormOpen(false);
+  }
 
   return (
     <MobileScreen>
@@ -60,10 +78,25 @@ export default function AgendaPage() {
             <h1 className="text-2xl font-bold font-headline text-foreground">
             Agenda
             </h1>
-            <Button variant="ghost" size="icon">
-                <Plus className="h-6 w-6" />
-                <span className="sr-only">Adicionar evento</span>
-            </Button>
+            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon">
+                    <Plus className="h-6 w-6" />
+                    <span className="sr-only">Adicionar evento</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                  <DialogHeader>
+                      <DialogTitle>Agendar Aulas</DialogTitle>
+                      <DialogDescription>Selecione o tipo de agendamento e preencha os detalhes.</DialogDescription>
+                  </DialogHeader>
+                  <NewLessonForm 
+                    schools={schools}
+                    onSubmit={handleAddLesson} 
+                    onCancel={() => setIsFormOpen(false)} 
+                   />
+              </DialogContent>
+            </Dialog>
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -74,7 +107,7 @@ export default function AgendaPage() {
                     selected={date}
                     onSelect={setDate}
                     locale={ptBR}
-                    className="p-4"
+                    className="p-0"
                     components={{
                         DayContent: DayWithDots,
                     }}
@@ -90,7 +123,7 @@ export default function AgendaPage() {
             <h3 className="font-bold text-lg text-foreground font-headline">Aulas do dia</h3>
             <div className="space-y-3">
                 {scheduledLessons.length > 0 ? (
-                    scheduledLessons.map((lesson) => (
+                    scheduledLessons.map((lesson: any) => (
                         <Card key={lesson.id}>
                             <CardContent className="p-4 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
