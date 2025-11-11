@@ -24,6 +24,9 @@ const lessonsByDay = {
     '2024-07-25': [
         { id: 4, time: "09:00", school: "Escola XYZ", value: "R$ 65,00", color: "#F87171" }, // red-400
     ],
+     '2024-08-05': [
+        { id: 5, time: "09:00", school: "Escola ABC", value: "R$ 50,00", color: "#34D399" },
+    ],
 };
 
 function DayWithDots(props: DayProps) {

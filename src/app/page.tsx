@@ -1,8 +1,9 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from 'next/image';
-import { DollarSign, Pocket, Smile, Star } from "lucide-react";
+import { DollarSign, Pocket, Smile, Star, Calendar, TrendingUp } from "lucide-react";
 
 import MobileScreen from "@/components/layout/mobile-screen";
 import HomeHeader from "@/components/profe/home-header";
@@ -13,10 +14,50 @@ import BottomNav from "@/components/layout/bottom-nav";
 import { Badge } from "@/components/ui/badge";
 import MonsterIcon from "@/components/icons/monster-icon";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { Card } from "@/components/ui/card";
+
+// Mock data, to be replaced by dynamic data later
+const lessonsByDay = {
+    '2024-07-15': [
+        { id: 1, time: "10:00", school: "Escola ABC", value: 50, color: "#34D399" },
+    ],
+    '2024-07-18': [
+        { id: 2, time: "14:00", school: "Escola XYZ", value: 65, color: "#F87171" },
+        { id: 3, time: "16:00", school: "Escola 123", value: 75, color: "#60A5FA" },
+    ],
+    '2024-07-25': [
+        { id: 4, time: "09:00", school: "Escola XYZ", value: 65, color: "#F87171" },
+    ],
+     '2024-08-05': [
+        { id: 5, time: "09:00", school: "Escola ABC", value: 50, color: "#34D399" },
+    ],
+};
+
 
 export default function Home() {
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
   const [dasDialogOpen, setDasDialogOpen] = useState(false);
+  const [monthlyStats, setMonthlyStats] = useState({ totalLessons: 0, totalValue: 0 });
+
+  useEffect(() => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    let totalLessons = 0;
+    let totalValue = 0;
+
+    Object.keys(lessonsByDay).forEach(dateStr => {
+        const date = new Date(dateStr);
+        if(date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+            // @ts-ignore
+            const lessons = lessonsByDay[dateStr];
+            totalLessons += lessons.length;
+            totalValue += lessons.reduce((acc: number, lesson: { value: number; }) => acc + lesson.value, 0);
+        }
+    });
+
+    setMonthlyStats({ totalLessons, totalValue });
+  }, []);
 
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');
 
@@ -41,6 +82,24 @@ export default function Home() {
           </div>
           <h2 className="text-2xl font-bold font-headline text-foreground">5 dias de ofensiva!</h2>
           <p className="text-muted-foreground">Você está no controle da sua grana!</p>
+        </div>
+
+        <div className="space-y-4">
+            <h3 className="font-bold text-lg text-foreground font-headline">Seu Mês em Números 🚀</h3>
+             <div className="grid grid-cols-2 gap-4">
+                <Card className="p-4 flex flex-col items-center justify-center text-center animate-scale-in">
+                    <Calendar className="w-8 h-8 text-primary mb-2" />
+                    <span className="font-bold text-3xl">{monthlyStats.totalLessons}</span>
+                    <span className="text-sm text-muted-foreground">Aulas Agendadas</span>
+                </Card>
+                <Card className="p-4 flex flex-col items-center justify-center text-center animate-scale-in" style={{ animationDelay: '100ms' }}>
+                    <TrendingUp className="w-8 h-8 text-primary mb-2" />
+                    <span className="font-bold text-3xl">
+                        R$ {monthlyStats.totalValue.toFixed(2).replace('.', ',')}
+                    </span>
+                    <span className="text-sm text-muted-foreground">Valor Bruto Previsto</span>
+                </Card>
+            </div>
         </div>
 
         <div className="space-y-4">
