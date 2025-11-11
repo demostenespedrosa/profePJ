@@ -97,7 +97,7 @@ export default function Home() {
                     <span className="font-bold text-3xl">
                         R$ {monthlyStats.totalValue.toFixed(2).replace('.', ',')}
                     </span>
-                    <span className="text-sm text-muted-foreground">Valor Bruto Previsto</span>
+                    <span className="text-sm text-muted-foreground">Ganhos Previstos</span>
                 </Card>
             </div>
         </div>
