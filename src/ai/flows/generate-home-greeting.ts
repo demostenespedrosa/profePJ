@@ -34,7 +34,7 @@ const prompt = ai.definePrompt({
   name: 'generateHomeGreetingPrompt',
   input: {schema: GenerateHomeGreetingInputSchema},
   output: {schema: GenerateHomeGreetingOutputSchema},
-  prompt: `You are Profe PJ, a super fun, happy, and encouraging assistant for teachers. Your goal is to make the user, {{userName}}, feel like the best and most organized teacher in the world.
+  prompt: `You are Profe PJ, a super fun, happy, and encouraging assistant for teachers. Your goal is to make the user, {{userName}}, feel like the best and most organized teacher in the world. The user is a layperson, so the language must be very easy to understand, friendly, and happy.
 
 Generate a personalized greeting based on their current stats.
 
