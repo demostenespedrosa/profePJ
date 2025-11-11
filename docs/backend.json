@@ -130,6 +130,11 @@
         "allocationPercentage": {
           "type": "number",
           "description": "The percentage of each lesson's earnings allocated to this pot."
+        },
+        "deadline": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The deadline to reach the pot's goal."
         }
       },
       "required": ["name", "type", "virtualBalance", "goal", "allocationPercentage"]

@@ -1,76 +1,89 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import MobileScreen from "@/components/layout/mobile-screen";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { DollarSign, Plus, Pocket, Target } from "lucide-react";
-import { differenceInDays, eachDayOfInterval, getDay } from 'date-fns';
+import { useFirebase, useCollection, useMemoFirebase } from "@/firebase";
+import { collection, addDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import NewPotForm from "./_components/new-pot-form";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-// Mock data for schools, should come from a context or API later
-const schools = [
-    { hourlyRate: 50, recessStart: new Date("2024-12-15"), recessEnd: new Date("2025-01-05") },
-    { hourlyRate: 65, recessStart: new Date("2024-12-20"), recessEnd: new Date("2025-01-10") },
-    { hourlyRate: 75, recessStart: new Date("2024-07-01"), recessEnd: new Date("2024-07-31") }
-];
-
-const calculateVacationGoal = () => {
-    let totalGoal = 0;
-    schools.forEach(school => {
-        const interval = { start: school.recessStart, end: school.recessEnd };
-        const daysInRecess = eachDayOfInterval(interval);
-        
-        const workDays = daysInRecess.filter(day => {
-            const dayOfWeek = getDay(day);
-            return dayOfWeek >= 1 && dayOfWeek <= 6; // Monday to Saturday
-        });
-
-        totalGoal += workDays.length * 4 * school.hourlyRate;
-    });
-    return totalGoal;
+type Pot = {
+    id: string;
+    name: string;
+    virtualBalance: number;
+    goal: number;
+    allocationPercentage: number;
+    type: 'Mandatory' | 'Dream';
+    deadline?: string;
 };
 
+const iconMap = {
+    "Férias 🏖️": <Pocket className="w-8 h-8 text-accent" />,
+    "Meu 13º 🎁": <DollarSign className="w-8 h-8 text-accent" />,
+    "default": <Target className="w-8 h-8 text-accent" />
+}
 
-const initialPotinhos = [
-    {
-        id: 1,
-        name: "Férias 🏖️",
-        current: 780,
-        goal: 2500, // This will be dynamically calculated
-        icon: <Pocket className="w-8 h-8 text-accent" />,
-        isMandatory: true,
-    },
-    {
-        id: 2,
-        name: "Meu 13º 🎁",
-        current: 820.50,
-        goal: 1500,
-        icon: <DollarSign className="w-8 h-8 text-accent" />,
-        isMandatory: true,
-    },
-    {
-        id: 3,
-        name: "Celular Novo 📱",
-        current: 350,
-        goal: 4000,
-        icon: <Target className="w-8 h-8 text-accent" />,
-        isMandatory: false,
-    }
-];
+const getIconForPot = (potName: string) => {
+    if (potName.includes("Férias")) return iconMap["Férias 🏖️"];
+    if (potName.includes("13º")) return iconMap["Meu 13º 🎁"];
+    return iconMap.default;
+}
 
 export default function PotinhosPage() {
-  const [potinhos, setPotinhos] = useState(initialPotinhos);
+  const [isNewPotFormOpen, setIsNewPotFormOpen] = useState(false);
+  const { user, firestore, isUserLoading } = useFirebase();
+  const { toast } = useToast();
+  
+  const potsColRef = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/pots`) : null, [firestore, user]);
+  const { data: potinhos, isLoading: arePotsLoading } = useCollection<Pot>(potsColRef);
 
-  useEffect(() => {
-    const vacationGoal = calculateVacationGoal();
-    setPotinhos(prevPotinhos =>
-        prevPotinhos.map(p =>
-            p.id === 1 ? { ...p, goal: vacationGoal } : p
-        )
-    );
-  }, []);
+  const handleAddPot = async (newPotData: { name: string; goal: number; deadline?: Date }) => {
+     if (!user) return;
+
+      try {
+        const potsRef = collection(firestore, `users/${user.uid}/pots`);
+        await addDoc(potsRef, {
+            ...newPotData,
+            deadline: newPotData.deadline?.toISOString(),
+            type: "Dream",
+            virtualBalance: 0,
+            allocationPercentage: 0, // Defaulting to 0, user might edit this later
+        });
+        toast({
+            title: "Sucesso!",
+            description: `Seu potinho "${newPotData.name}" foi criado.`,
+        });
+        setIsNewPotFormOpen(false);
+    } catch (error: any) {
+        console.error("Error adding pot: ", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao criar",
+            description: error.message || "Não foi possível criar o potinho. Tente novamente.",
+        });
+    }
+  }
+
+  const isLoading = isUserLoading || arePotsLoading;
+  
+  const mandatoryPots = potinhos?.filter(p => p.type === 'Mandatory') || [];
+  const dreamPots = potinhos?.filter(p => p.type === 'Dream') || [];
+
 
   return (
     <MobileScreen>
@@ -78,35 +91,104 @@ export default function PotinhosPage() {
             <h1 className="text-2xl font-bold font-headline text-foreground">
                 Meus Potinhos
             </h1>
-            <Button variant="ghost" size="icon">
-                <Plus className="h-6 w-6" />
-                <span className="sr-only">Criar Potinho</span>
-            </Button>
+            <Dialog open={isNewPotFormOpen} onOpenChange={setIsNewPotFormOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" disabled={!user}>
+                    <Plus className="h-6 w-6" />
+                    <span className="sr-only">Criar Potinho</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                  <DialogHeader>
+                      <DialogTitle>Criar Potinho dos Sonhos</DialogTitle>
+                      <CardDescription>Defina sua nova meta para poupar.</CardDescription>
+                  </DialogHeader>
+                  <NewPotForm onSubmit={handleAddPot} onCancel={() => setIsNewPotFormOpen(false)} />
+              </DialogContent>
+            </Dialog>
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
-        <div className="space-y-4">
-            {potinhos.map((potinho) => (
-                 <Card key={potinho.id} className="transform transition-transform duration-200 hover:scale-[1.02]">
+        {isLoading ? (
+            Array.from({ length: 4 }).map((_, index) => (
+                <Card key={index}>
                     <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-                        {potinho.icon}
-                        <div className="flex-1">
-                            <CardTitle className="text-xl font-bold">{potinho.name}</CardTitle>
-                            <CardDescription className="text-sm">Meta: R$ {potinho.goal.toFixed(2).replace('.', ',')}</CardDescription>
+                        <Skeleton className="w-8 h-8 rounded-full" />
+                        <div className="flex-1 space-y-2">
+                           <Skeleton className="h-6 w-32" />
+                           <Skeleton className="h-4 w-24" />
                         </div>
                     </CardHeader>
                     <CardContent>
                        <div className="mb-2">
-                         <span className="text-2xl font-bold text-foreground">R$ {potinho.current.toFixed(2).replace('.', ',')}</span>
+                         <Skeleton className="h-8 w-28" />
                        </div>
-                        <Progress value={(potinho.current / potinho.goal) * 100} className="h-3" />
-                        <p className="text-xs text-muted-foreground mt-1.5 text-right">
-                            {Math.round((potinho.current / potinho.goal) * 100)}% completo
-                        </p>
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-1/4 mt-1.5 ml-auto" />
                     </CardContent>
                 </Card>
-            ))}
-        </div>
+            ))
+        ) : (
+            <>
+                {mandatoryPots.length > 0 && <div className="space-y-4">
+                    <h3 className="font-bold text-lg text-foreground font-headline">Potinhos Obrigatórios</h3>
+                     {mandatoryPots.map((potinho) => (
+                         <Card key={potinho.id} className="transform transition-transform duration-200 hover:scale-[1.02]">
+                            <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
+                                {getIconForPot(potinho.name)}
+                                <div className="flex-1">
+                                    <CardTitle className="text-xl font-bold">{potinho.name}</CardTitle>
+                                    <CardDescription className="text-sm">Meta: R$ {potinho.goal.toFixed(2).replace('.', ',')}</CardDescription>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                            <div className="mb-2">
+                                <span className="text-2xl font-bold text-foreground">R$ {potinho.virtualBalance.toFixed(2).replace('.', ',')}</span>
+                            </div>
+                                <Progress value={(potinho.virtualBalance / potinho.goal) * 100} className="h-3" />
+                                <p className="text-xs text-muted-foreground mt-1.5 text-right">
+                                    {Math.round((potinho.virtualBalance / potinho.goal) * 100)}% completo
+                                </p>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>}
+
+                {dreamPots.length > 0 && <div className="space-y-4">
+                    <h3 className="font-bold text-lg text-foreground font-headline">Potinhos dos Sonhos</h3>
+                     {dreamPots.map((potinho) => (
+                         <Card key={potinho.id} className="transform transition-transform duration-200 hover:scale-[1.02]">
+                            <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
+                                {getIconForPot(potinho.name)}
+                                <div className="flex-1">
+                                    <CardTitle className="text-xl font-bold">{potinho.name}</CardTitle>
+                                    <CardDescription className="text-sm">
+                                        Meta: R$ {potinho.goal.toFixed(2).replace('.', ',')}
+                                        {potinho.deadline && ` até ${format(new Date(potinho.deadline), 'dd/MM/yyyy', {locale: ptBR})}`}
+                                    </CardDescription>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                            <div className="mb-2">
+                                <span className="text-2xl font-bold text-foreground">R$ {potinho.virtualBalance.toFixed(2).replace('.', ',')}</span>
+                            </div>
+                                <Progress value={(potinho.virtualBalance / potinho.goal) * 100} className="h-3" />
+                                <p className="text-xs text-muted-foreground mt-1.5 text-right">
+                                    {Math.round((potinho.virtualBalance / potinho.goal) * 100)}% completo
+                                </p>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>}
+                
+                {!potinhos || potinhos.length === 0 && (
+                    <div className="text-center py-12 px-4 border-2 border-dashed rounded-lg">
+                        <h3 className="text-lg font-semibold text-foreground">Você ainda não tem potinhos</h3>
+                        <p className="text-muted-foreground mt-1">Os potinhos obrigatórios (Férias e 13º) serão criados com sua conta. Clique no '+' para criar um potinho dos seus sonhos!</p>
+                    </div>
+                )}
+            </>
+        )}
       </main>
 
       <BottomNav />
