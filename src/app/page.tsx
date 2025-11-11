@@ -106,9 +106,6 @@ export default function Home() {
               className="rounded-full border-4 border-white shadow-lg"
               data-ai-hint={userAvatar.imageHint}
             />}
-            <Badge className="absolute -bottom-2 -right-2 text-2xl" variant="secondary">
-              🔥
-            </Badge>
           </div>
           {greeting ? (
             <div className="animate-scale-in">
