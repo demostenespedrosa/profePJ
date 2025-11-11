@@ -11,14 +11,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription as DialogDescriptionComponent,
   DialogTrigger,
-  DialogFooter,
-  DialogClose
 } from "@/components/ui/dialog";
 import NewSchoolForm from './_components/new-school-form';
+import AddRecessForm from './_components/add-recess-form';
 import { format, parseISO } from 'date-fns';
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -33,7 +33,8 @@ type Institution = {
 
 
 export default function InstituicoesPage() {
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isNewSchoolFormOpen, setIsNewSchoolFormOpen] = useState(false);
+  const [editingRecessSchool, setEditingRecessSchool] = useState<Institution | null>(null);
   const { user, firestore, isUserLoading } = useFirebase();
   const { toast } = useToast();
 
@@ -54,7 +55,7 @@ export default function InstituicoesPage() {
             title: "Sucesso!",
             description: `A instituição "${newSchoolData.name}" foi adicionada.`,
         });
-        setIsFormOpen(false);
+        setIsNewSchoolFormOpen(false);
     } catch (error: any) {
         console.error("Error adding institution: ", error);
         toast({
@@ -64,6 +65,30 @@ export default function InstituicoesPage() {
         });
     }
   }
+
+  const handleSaveRecess = async (data: { startDate: Date; endDate: Date }) => {
+    if (!user || !editingRecessSchool) return;
+
+    try {
+        const institutionRef = doc(firestore, `users/${user.uid}/institutions/${editingRecessSchool.id}`);
+        await updateDoc(institutionRef, {
+            recessStart: data.startDate.toISOString(),
+            recessEnd: data.endDate.toISOString(),
+        });
+        toast({
+            title: "Sucesso!",
+            description: `Recesso para "${editingRecessSchool.name}" foi salvo.`,
+        });
+        setEditingRecessSchool(null);
+    } catch (error: any) {
+        console.error("Error saving recess: ", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao salvar",
+            description: error.message || "Não foi possível salvar o recesso. Tente novamente.",
+        });
+    }
+  };
   
   const isLoading = isUserLoading || areSchoolsLoading;
 
@@ -73,7 +98,7 @@ export default function InstituicoesPage() {
             <h1 className="text-2xl font-bold font-headline text-foreground">
                 Instituições
             </h1>
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <Dialog open={isNewSchoolFormOpen} onOpenChange={setIsNewSchoolFormOpen}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="icon" disabled={!user}>
                     <Plus className="h-6 w-6" />
@@ -85,7 +110,7 @@ export default function InstituicoesPage() {
                       <DialogTitle>Nova Instituição</DialogTitle>
                       <CardDescription>Preencha os dados para cadastrar uma nova escola.</CardDescription>
                   </DialogHeader>
-                  <NewSchoolForm onSubmit={handleAddSchool} onCancel={() => setIsFormOpen(false)} />
+                  <NewSchoolForm onSubmit={handleAddSchool} onCancel={() => setIsNewSchoolFormOpen(false)} />
               </DialogContent>
             </Dialog>
       </header>
@@ -140,10 +165,24 @@ export default function InstituicoesPage() {
                                 </div>
                              </div>
                         ) : (
-                            <Button variant="outline" className="w-full">
-                                <CalendarPlus className="mr-2 h-4 w-4" />
-                                Adicionar Recesso
-                            </Button>
+                            <Dialog open={editingRecessSchool?.id === school.id} onOpenChange={(isOpen) => setEditingRecessSchool(isOpen ? school : null)}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" className="w-full">
+                                        <CalendarPlus className="mr-2 h-4 w-4" />
+                                        Adicionar Recesso
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-md">
+                                    <DialogHeader>
+                                        <DialogTitle>Adicionar Recesso para {school.name}</DialogTitle>
+                                        <DialogDescriptionComponent>Selecione a data de início e fim do período de recesso.</DialogDescriptionComponent>
+                                    </DialogHeader>
+                                    <AddRecessForm 
+                                        onSubmit={handleSaveRecess}
+                                        onCancel={() => setEditingRecessSchool(null)} 
+                                    />
+                                </DialogContent>
+                             </Dialog>
                         )}
                     </CardContent>
                 </Card>
@@ -155,6 +194,21 @@ export default function InstituicoesPage() {
             )}
         </div>
       </main>
+
+       {/* This Dialog is for the 'add recess' functionality */}
+        <Dialog open={!!editingRecessSchool} onOpenChange={(isOpen) => !isOpen && setEditingRecessSchool(null)}>
+            <DialogContent className="max-w-md">
+                 <DialogHeader>
+                    <DialogTitle>Adicionar Recesso para {editingRecessSchool?.name}</DialogTitle>
+                     <DialogDescriptionComponent>Selecione a data de início e fim do período de recesso.</DialogDescriptionComponent>
+                </DialogHeader>
+                <AddRecessForm 
+                    onSubmit={handleSaveRecess}
+                    onCancel={() => setEditingRecessSchool(null)} 
+                />
+            </DialogContent>
+        </Dialog>
+
 
       <BottomNav />
     </MobileScreen>
