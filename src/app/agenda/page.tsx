@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { ptBR } from "date-fns/locale";
 
 const scheduledLessons = [
     { id: 1, time: "10:00", school: "Escola ABC", value: "R$ 50,00" },
@@ -30,11 +31,12 @@ export default function AgendaPage() {
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
         <Card>
-            <CardContent className="p-0">
+            <CardContent className="p-0 flex justify-center">
                 <Calendar
                     mode="single"
                     selected={date}
                     onSelect={setDate}
+                    locale={ptBR}
                     className="w-full"
                     classNames={{
                         day_selected: "bg-primary text-primary-foreground hover:bg-primary/90 focus:bg-primary/90",
