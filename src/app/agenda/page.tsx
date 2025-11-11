@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ptBR } from "date-fns/locale";
+import MobileScreen from "@/components/layout/mobile-screen";
+import BottomNav from "@/components/layout/bottom-nav";
 
 const scheduledLessons = [
     { id: 1, time: "10:00", school: "Escola ABC", value: "R$ 50,00" },
@@ -16,7 +18,7 @@ export default function AgendaPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
 
   return (
-    <>
+    <MobileScreen>
         <header className="sticky top-0 z-10 flex items-center justify-between p-4 bg-background/80 backdrop-blur-sm border-b">
             <h1 className="text-2xl font-bold font-headline text-foreground">
             Agenda
@@ -74,6 +76,7 @@ export default function AgendaPage() {
         </div>
       </main>
 
-    </>
+      <BottomNav />
+    </MobileScreen>
   );
 }
