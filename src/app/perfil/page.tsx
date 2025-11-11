@@ -10,9 +10,10 @@ import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import Link from "next/link";
 
 const menuItems = [
-    { icon: UserIcon, label: "Meus Dados", href: "#" },
+    { icon: UserIcon, label: "Meus Dados", href: "/perfil/meus-dados" },
     { icon: School, label: "Instituições de Ensino", href: "/instituicoes" },
     { icon: Bell, label: "Notificações", href: "#" },
     { icon: Shield, label: "Segurança", href: "#" },
@@ -80,11 +81,11 @@ export default function PerfilPage() {
                 <ul className="divide-y">
                     {menuItems.map((item) => (
                          <li key={item.label}>
-                             <a href={item.href} className="flex items-center p-4 hover:bg-secondary/50 transition-colors">
+                             <Link href={item.href} className="flex items-center p-4 hover:bg-secondary/50 transition-colors">
                                  <item.icon className="w-5 h-5 mr-4 text-muted-foreground" />
                                  <span className="flex-1 font-medium">{item.label}</span>
                                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                             </a>
+                             </Link>
                          </li>
                     ))}
                 </ul>
