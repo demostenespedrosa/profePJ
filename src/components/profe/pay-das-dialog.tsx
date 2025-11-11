@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import MonsterIcon from "@/components/icons/monster-icon";
@@ -32,6 +35,10 @@ export default function PayDasDialog({ open, onOpenChange }: PayDasDialogProps) 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm text-center p-8">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Confirmar Pagamento do DAS</DialogTitle>
+          <DialogDescription>Uma tela para confirmar que você pagou o imposto mensal do DAS e derrotar o "monstro".</DialogDescription>
+        </DialogHeader>
         {defeated && <Confetti />}
         {!defeated ? (
           <>

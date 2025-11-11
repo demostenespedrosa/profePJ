@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Confetti from "./confetti";
@@ -46,6 +47,10 @@ export default function CompleteLessonDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm p-0 overflow-hidden">
         {showConfetti && <Confetti />}
+        <DialogHeader className="sr-only">
+          <DialogTitle>Aula Concluída com Sucesso</DialogTitle>
+          <DialogDescription>Parabéns por completar mais uma aula! Veja como seu dinheiro foi distribuído.</DialogDescription>
+        </DialogHeader>
         <div className="p-8 text-center bg-primary/10">
           <div className="animate-scale-in">
             <h2 className="text-5xl font-bold text-primary font-headline">
