@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import MonsterIcon from "@/components/icons/monster-icon";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Card } from "@/components/ui/card";
+import { generateHomeGreeting } from "@/ai/flows/generate-home-greeting";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Mock data, to be replaced by dynamic data later
 const lessonsByDay = {
@@ -33,11 +35,15 @@ const lessonsByDay = {
     ],
 };
 
+const streakDays = 5;
+const userName = "Joana";
+
 
 export default function Home() {
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
   const [dasDialogOpen, setDasDialogOpen] = useState(false);
   const [monthlyStats, setMonthlyStats] = useState({ totalLessons: 0, totalValue: 0 });
+  const [greeting, setGreeting] = useState<{ title: string; subtitle: string } | null>(null);
 
   useEffect(() => {
     const currentMonth = new Date().getMonth();
@@ -57,6 +63,30 @@ export default function Home() {
     });
 
     setMonthlyStats({ totalLessons, totalValue });
+
+    async function fetchGreeting() {
+      try {
+        const response = await generateHomeGreeting({
+          userName: userName,
+          streakDays: streakDays,
+          monthlyLessons: totalLessons,
+          monthlyEarnings: totalValue,
+        });
+        setGreeting({
+          title: response.greetingTitle,
+          subtitle: response.greetingSubtitle
+        });
+      } catch (error) {
+        console.error("Error generating greeting:", error);
+        // Fallback greeting
+        setGreeting({
+          title: `Olá, ${userName}!`,
+          subtitle: "Você está no controle da sua grana!"
+        });
+      }
+    }
+
+    fetchGreeting();
   }, []);
 
   const userAvatar = PlaceHolderImages.find(p => p.id === 'user-avatar-1');
@@ -80,8 +110,17 @@ export default function Home() {
               🔥
             </Badge>
           </div>
-          <h2 className="text-2xl font-bold font-headline text-foreground">5 dias de ofensiva!</h2>
-          <p className="text-muted-foreground">Você está no controle da sua grana!</p>
+          {greeting ? (
+            <div className="animate-scale-in">
+              <h2 className="text-2xl font-bold font-headline text-foreground">{greeting.title}</h2>
+              <p className="text-muted-foreground">{greeting.subtitle}</p>
+            </div>
+          ) : (
+             <div className="space-y-2">
+                <Skeleton className="h-8 w-3/4 mx-auto" />
+                <Skeleton className="h-5 w-1/2 mx-auto" />
+            </div>
+          )}
         </div>
 
         <div className="space-y-4">
