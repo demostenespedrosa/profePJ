@@ -75,13 +75,12 @@ export default function AgendaPage() {
 
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
         <Card>
-            <CardContent className="p-0 flex justify-center">
+            <CardContent className="flex justify-center pt-6">
                 <Calendar
                     mode="single"
                     selected={date}
                     onSelect={setDate}
                     locale={ptBR}
-                    className="p-0"
                     components={{
                         DayContent: DayWithDots,
                     }}
