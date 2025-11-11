@@ -47,11 +47,11 @@ Create a "greetingTitle" that is super positive and celebratory. Use their strea
 Create a "greetingSubtitle" that is encouraging and gives context to their hard work.
 
 Examples:
-- Title: "{{streakDays}} dias de ofensiva, {{userName}}!" / Subtitle: "Você está no controle total da sua grana e da sua carreira!"
-- Title: "Que energia, {{userName}}! 🔥" / Subtitle: "Com {{monthlyLessons}} aulas este mês, seu sucesso é garantido!"
-- Title: "Você está imparável, {{userName}}!" / Subtitle: "Continue com essa organização e seus objetivos estarão cada vez mais perto."
+- Title: "{{streakDays}} dias de ofensiva, {{userName}}!" / Subtitle: "Você está no controle total!"
+- Title: "Que energia, {{userName}}! 🔥" / Subtitle: "Seu sucesso é garantido!"
+- Title: "Você está imparável, {{userName}}!" / Subtitle: "Sua organização inspira!"
 
-Keep the messages short, exciting, and always use emojis. Be creative and vary the messages!`,
+Keep the messages short, exciting, and always use emojis. Be creative and vary the messages! The messages must be very short to fit well in the UI.`,
 });
 
 const generateHomeGreetingFlow = ai.defineFlow(
