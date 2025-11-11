@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { format } from 'date-fns';
 
 const formSchema = z.object({
   startDate: z.coerce.date({
@@ -54,7 +55,7 @@ export default function AddRecessForm({ onSubmit, onCancel }: AddRecessFormProps
                 <FormItem className="flex flex-col">
                 <FormLabel>Início do Recesso</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''} />
+                  <Input type="date" {...field} value={field.value instanceof Date ? format(field.value, 'yyyy-MM-dd') : ''} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -67,7 +68,7 @@ export default function AddRecessForm({ onSubmit, onCancel }: AddRecessFormProps
                 <FormItem className="flex flex-col">
                 <FormLabel>Fim do Recesso</FormLabel>
                  <FormControl>
-                  <Input type="date" {...field} value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''} min={form.getValues("startDate") instanceof Date ? form.getValues("startDate").toISOString().split('T')[0] : undefined} />
+                  <Input type="date" {...field} value={field.value instanceof Date ? format(field.value, 'yyyy-MM-dd') : ''} min={form.getValues("startDate") instanceof Date ? format(form.getValues("startDate"), 'yyyy-MM-dd') : undefined} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
