@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gerador de Ícone Profe PJ</title>
+  <style>
+    body {
+      font-family: 'PT Sans', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #ECE8FF;
+      padding: 20px;
+    }
+    
+    .preview {
+      border: 2px solid #A076F9;
+      border-radius: 12px;
+      margin: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      background: white;
+      padding: 20px;
+    }
+    
+    canvas {
+      display: block;
+      margin: 10px auto;
+    }
+    
+    button {
+      background: #A076F9;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    
+    button:hover {
+      background: #8F5FE8;
+    }
+    
+    h1 {
+      color: #A076F9;
+    }
+    
+    h3 {
+      color: #666;
+      margin-top: 0;
+    }
+    
+    .container {
+      text-align: center;
+    }
+    
+    .success {
+      background: #34D399;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      margin: 10px;
+      display: none;
+    }
+    
+    .info {
+      background: #E0E7FF;
+      color: #4C1D95;
+      padding: 16px;
+      border-radius: 8px;
+      margin: 20px auto;
+      max-width: 600px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 Gerador de Ícones - Profe PJ</h1>
+    <p>Usando o logo.svg oficial do projeto</p>
+    
+    <div class="info">
+      <strong>✨ Como usar:</strong>
+      <ol style="margin: 10px 0;">
+        <li>Clique nos botões abaixo para baixar os ícones</li>
+        <li>Salve os arquivos na pasta <code>/public/</code></li>
+        <li>Os ícones já estão no formato correto para PWA!</li>
+      </ol>
+    </div>
+    
+    <div class="preview">
+      <h3>Preview 192x192</h3>
+      <canvas id="icon192" width="192" height="192"></canvas>
+      <button onclick="downloadIcon('icon192', 'icon-192x192.png')">⬇️ Download 192x192</button>
+    </div>
+    
+    <div class="preview">
+      <h3>Preview 512x512</h3>
+      <canvas id="icon512" width="512" height="512"></canvas>
+      <button onclick="downloadIcon('icon512', 'icon-512x512.png')">⬇️ Download 512x512</button>
+    </div>
+    
+    <div class="preview">
+      <h3>Preview 72x72 (Badge)</h3>
+      <canvas id="badge72" width="72" height="72"></canvas>
+      <button onclick="downloadIcon('badge72', 'badge-72x72.png')">⬇️ Download Badge 72x72</button>
+    </div>
+    
+    <div class="success" id="success">✅ Ícone baixado com sucesso!</div>
+  </div>
+
+  <script>
+    function drawIconFromSVG(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      
+      // Load and draw the SVG
+      const img = new Image();
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0, size, size);
+      };
+      
+      // Use the logo.svg file
+      img.src = '/logo.svg';
+    }
+    
+    function downloadIcon(canvasId, filename) {
+      const canvas = document.getElementById(canvasId);
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      // Show success message
+      const success = document.getElementById('success');
+      success.style.display = 'block';
+      setTimeout(() => {
+        success.style.display = 'none';
+      }, 2000);
+    }
+    
+    // Draw all icons on load
+    window.onload = function() {
+      drawIconFromSVG('icon192', 192);
+      drawIconFromSVG('icon512', 512);
+      drawIconFromSVG('badge72', 72);
+    };
+  </script>
+</body>
+</html>

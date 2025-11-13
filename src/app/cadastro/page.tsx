@@ -96,7 +96,7 @@ export default function CadastroPage() {
       if (inputValue.length < 6) {
         botResponse = "A senha precisa ter no mínimo 6 caracteres. Tente de novo!";
       } else {
-        botResponse = "Fechado! Estou criando sua conta e uns 'Potinhos' mágicos pra gente guardar seu 13º e suas Férias sem esforço. Bem-vindo(a) ao Profe Amigo! 🎉";
+        botResponse = "Fechado! Estou criando sua conta e uns 'Potinhos' mágicos pra gente guardar seu 13º e suas Férias sem esforço. Bem-vindo(a) ao Profe PJ! 🎉";
         setMessages(prev => [...prev, { sender: "bot", text: botResponse }]);
         
         // Finalize registration
@@ -131,7 +131,14 @@ export default function CadastroPage() {
     }
 
     setIsLoading(false);
-    if (step !== "password" || (step === "password" && inputValue.length < 6) || (step === "hourlyRate" && isNaN(parseFloat(inputValue.replace(',', '.'))))) {
+    // Only add bot response if not the final password step OR if there was an error
+    const shouldShowResponse = 
+      step !== "password" || 
+      (step === "password" && inputValue.length < 6) ||
+      (step === "hourlyRate" && (isNaN(parseFloat(inputValue.replace(',', '.'))) || parseFloat(inputValue.replace(',', '.')) <= 0)) ||
+      (step === "dasDueDate" && (isNaN(parseInt(inputValue, 10)) || parseInt(inputValue, 10) < 1 || parseInt(inputValue, 10) > 31));
+    
+    if (shouldShowResponse) {
         setMessages(prev => [...prev, { sender: "bot", text: botResponse }]);
     }
   };

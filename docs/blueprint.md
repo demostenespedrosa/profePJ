@@ -1,4 +1,4 @@
-# **App Name**: Profe Amigo
+# **App Name**: Profe PJ
 
 ## Core Features:
 
