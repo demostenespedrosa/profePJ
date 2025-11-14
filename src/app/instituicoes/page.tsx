@@ -71,9 +71,17 @@ export default function InstituicoesPage() {
 
     try {
         const institutionRef = doc(firestore, `users/${user.uid}/institutions/${editingRecessSchool.id}`);
+        
+        // Fix timezone issue: set to noon to avoid UTC conversion problems
+        const startDate = new Date(data.startDate);
+        startDate.setHours(12, 0, 0, 0);
+        
+        const endDate = new Date(data.endDate);
+        endDate.setHours(12, 0, 0, 0);
+        
         await updateDoc(institutionRef, {
-            recessStart: data.startDate.toISOString(),
-            recessEnd: data.endDate.toISOString(),
+            recessStart: startDate.toISOString(),
+            recessEnd: endDate.toISOString(),
         });
         toast({
             title: "Sucesso!",
