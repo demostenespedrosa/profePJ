@@ -16,13 +16,6 @@ export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    // Se já está logado, redireciona para o app
-    if (!isUserLoading && user) {
-      router.push('/');
-    }
-  }, [user, isUserLoading, router]);
-
-  useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
@@ -30,7 +23,8 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (isUserLoading || user) {
+  // Show loading while checking auth
+  if (isUserLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Logo className="h-12 w-auto text-primary animate-pulse" />
