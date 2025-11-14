@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import Confetti from "@/components/profe/confetti";
@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/profe/logo";
 
-export default function PagamentoSucessoPage() {
+function PagamentoSucessoContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
@@ -68,5 +68,22 @@ export default function PagamentoSucessoPage() {
         </Card>
       </main>
     </MobileScreen>
+  );
+}
+
+export default function PagamentoSucessoPage() {
+  return (
+    <Suspense fallback={
+      <MobileScreen>
+        <header className="sticky top-0 z-10 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm border-b">
+          <Logo className="h-8 w-auto text-primary" />
+        </header>
+        <main className="flex-1 overflow-y-auto p-4 flex items-center justify-center">
+          <div className="text-center text-muted-foreground">Carregando...</div>
+        </main>
+      </MobileScreen>
+    }>
+      <PagamentoSucessoContent />
+    </Suspense>
   );
 }
