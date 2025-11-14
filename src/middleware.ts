@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('firebase-auth-token');
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/login', '/cadastro', '/assinatura'];
+  const publicRoutes = ['/login', '/cadastro', '/assinatura', '/'];
   const isPublicRoute = publicRoutes.some(route => url.pathname.startsWith(route));
 
   // Allow access to public routes and static assets
