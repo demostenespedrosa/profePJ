@@ -30,6 +30,7 @@ export type UserProfile = {
     trialEndsAt?: string;
     subscriptionStatus: SubscriptionStatus;
     createdAt: string;
+    isAdmin?: boolean;
 };
 
 export type Subscription = {

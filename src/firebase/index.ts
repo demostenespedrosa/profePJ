@@ -40,6 +40,10 @@ export function getSdks(firebaseApp: FirebaseApp) {
   };
 }
 
+// Export initialized instances for client-side use
+const { auth, firestore, firebaseApp } = initializeFirebase();
+export { auth, firestore, firebaseApp };
+
 export * from './provider';
 export * from './client-provider';
 export * from './firestore/use-collection';
