@@ -263,7 +263,7 @@ export default function AssinaturaPage() {
                     <span className="text-sm font-medium">Valor mensal</span>
                   </div>
                   <span className="text-sm font-semibold text-primary">
-                    R$ 29,90
+                    R$ 19,90
                   </span>
                 </div>
               </div>
@@ -321,7 +321,7 @@ export default function AssinaturaPage() {
                 ) : (
                   <>
                     <CreditCard className="w-4 h-4 mr-2" />
-                    Assinar Agora - R$ 29,90/mês
+                    Assinar Agora - R$ 19,90/mês
                   </>
                 )}
               </Button>
@@ -340,7 +340,7 @@ export default function AssinaturaPage() {
               <CardTitle className="text-2xl">Plano Mensal</CardTitle>
             </div>
             <div className="text-4xl font-bold text-primary">
-              R$ 29,90<span className="text-lg text-muted-foreground">/mês</span>
+              R$ 19,90<span className="text-lg text-muted-foreground">/mês</span>
             </div>
             {!subscriptionData.hasAccess && (
               <CardDescription className="text-base font-semibold text-green-600">
