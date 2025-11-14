@@ -19,6 +19,7 @@ import { useFirebase, useDoc, useCollection, useMemoFirebase } from "@/firebase"
 import { Lesson } from "@/types";
 import Logo from "@/components/profe/logo";
 import TrialBanner from "@/components/profe/trial-banner";
+import LandingPage from "@/components/landing/landing-page";
 
 type UserProfile = {
   name: string;
@@ -59,6 +60,11 @@ export default function Home() {
   
   const { user, firestore, isUserLoading } = useFirebase();
   const router = useRouter();
+
+  // Se não está logado, mostra landing page
+  if (!isUserLoading && !user) {
+    return <LandingPage />;
+  }
 
   // Memoize Firestore references
   const userProfileRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
