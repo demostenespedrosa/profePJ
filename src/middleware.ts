@@ -5,11 +5,14 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('firebase-auth-token');
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/login', '/cadastro', '/assinatura', '/'];
+  const publicRoutes = ['/login', '/cadastro', '/assinatura'];
   const isPublicRoute = publicRoutes.some(route => url.pathname.startsWith(route));
+  
+  // Home page is public (landing page for non-authenticated users)
+  const isHomePage = url.pathname === '/';
 
-  // Allow access to public routes and static assets
-  if (isPublicRoute || url.pathname.startsWith('/_next') || url.pathname.startsWith('/static') || url.pathname.startsWith('/offline') || url.pathname.includes('.')) {
+  // Allow access to public routes, home page, and static assets
+  if (isPublicRoute || isHomePage || url.pathname.startsWith('/_next') || url.pathname.startsWith('/static') || url.pathname.startsWith('/offline') || url.pathname.includes('.')) {
     return NextResponse.next();
   }
 
