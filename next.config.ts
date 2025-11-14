@@ -31,48 +31,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  devIndicators: {
-    allowedDevOrigins: [
-        '*.cluster-mdgxqvvkkbfpqrfigfiuugu5pk.cloudworkstations.dev',
-    ],
-  },
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/login',
-        permanent: false,
-        missing: [
-            {
-                type: 'cookie',
-                key: 'firebase-auth-token',
-            }
-        ]
-      },
-       {
-        source: '/login',
-        destination: '/',
-        permanent: false,
-        has: [
-            {
-                type: 'cookie',
-                key: 'firebase-auth-token',
-            }
-        ]
-      },
-      {
-        source: '/cadastro',
-        destination: '/',
-        permanent: false,
-        has: [
-            {
-                type: 'cookie',
-                key: 'firebase-auth-token',
-            }
-        ]
-      }
-    ]
-  },
 };
 
 export default nextConfig;
