@@ -31,6 +31,6 @@ export const config = {
      * - _next (Next.js internals)
      * - static files (images, fonts, etc)
      */
-    '/((?!api|_next|.*\\..*).*)/',
+    '/((?!api|_next|.*\\..*).*)',
   ],
 };
