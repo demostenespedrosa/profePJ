@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, CreditCard, Check, Sparkles, Calendar, Clock, XCircle } from "lucide-react";
+import { Loader2, CreditCard, Check, Sparkles, Calendar, Clock, XCircle, ArrowLeft } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import MobileScreen from "@/components/layout/mobile-screen";
+import BottomNav from "@/components/layout/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFirebase } from "@/firebase";
@@ -101,8 +102,17 @@ export default function AssinaturaPage() {
   if (subscriptionData.isLoading) {
     return (
       <MobileScreen>
-        <header className="sticky top-0 z-10 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm border-b">
+        <header className="sticky top-0 z-10 flex items-center justify-between p-4 bg-background/80 backdrop-blur-sm border-b">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push('/perfil')}
+            className="flex-shrink-0"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
           <Logo className="h-8 w-auto text-primary" />
+          <div className="w-10" /> {/* Spacer for centering */}
         </header>
         <main className="flex-1 overflow-y-auto p-4 space-y-6">
           <div className="text-center py-8">
@@ -111,17 +121,27 @@ export default function AssinaturaPage() {
           </div>
           <Skeleton className="h-64 w-full" />
         </main>
+        <BottomNav />
       </MobileScreen>
     );
   }
 
   return (
     <MobileScreen>
-      <header className="sticky top-0 z-10 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm border-b">
+      <header className="sticky top-0 z-10 flex items-center justify-between p-4 bg-background/80 backdrop-blur-sm border-b">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push('/perfil')}
+          className="flex-shrink-0"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
         <Logo className="h-8 w-auto text-primary" />
+        <div className="w-10" /> {/* Spacer for centering */}
       </header>
 
-      <main className="flex-1 overflow-y-auto p-4 space-y-6">
+      <main className="flex-1 overflow-y-auto p-4 space-y-6 pb-24">
         <div className="text-center py-6">
           <h1 className="text-3xl font-bold font-headline text-foreground mb-2">
             {subscriptionData.hasAccess ? "Sua Assinatura" : "Assine o Profe PJ"}
@@ -439,6 +459,7 @@ export default function AssinaturaPage() {
           </Card>
         </div>
       </main>
+      <BottomNav />
     </MobileScreen>
   );
 }
