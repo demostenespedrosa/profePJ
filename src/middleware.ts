@@ -4,17 +4,22 @@ export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
   const token = request.cookies.get('firebase-auth-token');
 
-  // Only protect routes that MUST require authentication
-  // Everything else is public by default
-  const protectedRoutes = ['/agenda', '/perfil', '/potinhos', '/instituicoes', '/admin'];
-  const isProtectedRoute = protectedRoutes.some(route => url.pathname.startsWith(route));
+  // Public routes (don't require auth and don't redirect)
+  const publicRoutes = ['/landing', '/login', '/cadastro', '/assinatura'];
+  const isPublicRoute = publicRoutes.some(route => url.pathname.startsWith(route));
 
-  // If accessing a protected route without token, redirect to home (landing page)
-  if (isProtectedRoute && !token) {
-    url.pathname = '/';
+  // If it's a public route, allow access
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+
+  // If no token, redirect to landing page
+  if (!token) {
+    url.pathname = '/landing';
     return NextResponse.redirect(url);
   }
 
+  // User is authenticated, allow access
   return NextResponse.next();
 }
 

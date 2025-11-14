@@ -7,12 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Logo from "@/components/profe/logo";
-import { useFirebase } from "@/firebase";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function LandingPage() {
   const router = useRouter();
-  const { user, isUserLoading } = useFirebase();
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -22,15 +20,6 @@ export default function LandingPage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Show loading while checking auth
-  if (isUserLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Logo className="h-12 w-auto text-primary animate-pulse" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
