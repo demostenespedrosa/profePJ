@@ -16,6 +16,7 @@ export type SubscriptionAccess = {
   needsPayment: boolean;
   daysLeftInTrial: number | null;
   subscription: Subscription | null;
+  userProfile: UserProfile | null;
   isLoading: boolean;
 };
 
@@ -45,6 +46,7 @@ export function useSubscription(): SubscriptionAccess {
     needsPayment: false,
     daysLeftInTrial: null,
     subscription: null,
+    userProfile: null,
     isLoading: true,
   });
 
@@ -65,6 +67,7 @@ export function useSubscription(): SubscriptionAccess {
         needsPayment: true,
         daysLeftInTrial: null,
         subscription: null,
+        userProfile: null,
         isLoading: false,
       });
       return;
@@ -112,6 +115,7 @@ export function useSubscription(): SubscriptionAccess {
       needsPayment,
       daysLeftInTrial,
       subscription: subscription || null,
+      userProfile: userProfile || null,
       isLoading: false,
     });
 

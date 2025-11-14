@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, CreditCard, Check, Sparkles } from "lucide-react";
+import { Loader2, CreditCard, Check, Sparkles, Calendar, Clock, XCircle } from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 import MobileScreen from "@/components/layout/mobile-screen";
 import { Button } from "@/components/ui/button";
@@ -12,12 +14,13 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import Logo from "@/components/profe/logo";
+import { Badge } from "@/components/ui/badge";
 
 export default function AssinaturaPage() {
   const router = useRouter();
   const { user } = useFirebase();
   const { toast } = useToast();
-  const subscription = useSubscription();
+  const subscriptionData = useSubscription();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubscribe = async () => {
@@ -63,7 +66,7 @@ export default function AssinaturaPage() {
   };
 
   const handleManageBilling = async () => {
-    if (!user || !subscription.subscription) return;
+    if (!user || !subscriptionData.subscription) return;
 
     setIsLoading(true);
 
@@ -95,7 +98,7 @@ export default function AssinaturaPage() {
     }
   };
 
-  if (subscription.isLoading) {
+  if (subscriptionData.isLoading) {
     return (
       <MobileScreen>
         <header className="sticky top-0 z-10 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm border-b">
@@ -121,29 +124,188 @@ export default function AssinaturaPage() {
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
         <div className="text-center py-6">
           <h1 className="text-3xl font-bold font-headline text-foreground mb-2">
-            {subscription.hasAccess ? "Sua Assinatura" : "Assine o Profe PJ"}
+            {subscriptionData.hasAccess ? "Sua Assinatura" : "Assine o Profe PJ"}
           </h1>
-          {subscription.isTrialing && subscription.daysLeftInTrial !== null && (
+          {subscriptionData.isTrialing && subscriptionData.daysLeftInTrial !== null && (
             <p className="text-muted-foreground">
-              {subscription.daysLeftInTrial} dias restantes no período de teste
+              {subscriptionData.daysLeftInTrial} dias restantes no período de teste
             </p>
           )}
         </div>
 
-        {/* Status Card */}
-        {subscription.hasAccess && (
-          <Card className="border-primary/20">
+        {/* Status Card - TRIAL */}
+        {subscriptionData.isTrialing && (
+          <Card className="border-green-500/30 bg-green-50 dark:bg-green-950">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Check className="w-5 h-5 text-green-500" />
-                {subscription.isTrialing ? "Período de Teste Ativo" : "Assinatura Ativa"}
-              </CardTitle>
-              <CardDescription>
-                {subscription.isTrialing
-                  ? `Aproveite todos os recursos gratuitamente por mais ${subscription.daysLeftInTrial} dias!`
-                  : "Você tem acesso total ao Profe PJ"}
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-green-600" />
+                  Período de Teste Ativo
+                </CardTitle>
+                <Badge variant="secondary" className="bg-green-600 text-white">
+                  Trial
+                </Badge>
+              </div>
+              <CardDescription className="text-green-800 dark:text-green-200">
+                Aproveite todos os recursos gratuitamente!
               </CardDescription>
             </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-white dark:bg-green-900 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Tempo restante</span>
+                </div>
+                <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                  {subscriptionData.daysLeftInTrial} {subscriptionData.daysLeftInTrial === 1 ? 'dia' : 'dias'}
+                </span>
+              </div>
+              
+              {subscriptionData.userProfile?.trialEndsAt && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Seu trial termina em {format(new Date(subscriptionData.userProfile.trialEndsAt), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                </p>
+              )}
+
+              <div className="pt-2">
+                <Button
+                  onClick={handleSubscribe}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Assinar Agora e Garantir Acesso
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-center text-muted-foreground mt-2">
+                  Ou continue aproveitando o período de teste
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Status Card - ASSINATURA ATIVA */}
+        {subscriptionData.isActive && !subscriptionData.isTrialing && subscriptionData.subscription && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Check className="w-5 h-5 text-green-500" />
+                  Assinatura Ativa
+                </CardTitle>
+                <Badge className="bg-green-600 text-white">
+                  Ativa
+                </Badge>
+              </div>
+              <CardDescription>
+                Você tem acesso total ao Profe PJ
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Informações da Assinatura */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-3 bg-background rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Assinando desde</span>
+                  </div>
+                  <span className="text-sm font-semibold">
+                    {subscriptionData.userProfile?.createdAt 
+                      ? formatDistanceToNow(new Date(subscriptionData.userProfile.createdAt), { 
+                          addSuffix: false, 
+                          locale: ptBR 
+                        })
+                      : 'Recentemente'}
+                  </span>
+                </div>
+
+                {subscriptionData.subscription && subscriptionData.subscription.currentPeriodEnd && (
+                  <div className="flex items-center justify-between p-3 bg-background rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Próxima cobrança</span>
+                    </div>
+                    <span className="text-sm font-semibold">
+                      {format(new Date(subscriptionData.subscription.currentPeriodEnd), "dd/MM/yyyy")}
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between p-3 bg-background rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Valor mensal</span>
+                  </div>
+                  <span className="text-sm font-semibold text-primary">
+                    R$ 29,90
+                  </span>
+                </div>
+              </div>
+
+              {/* Botão de Gerenciar */}
+              <div className="pt-2 space-y-2">
+                <Button
+                  onClick={handleManageBilling}
+                  variant="outline"
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Gerenciar Assinatura e Pagamento
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-center text-muted-foreground">
+                  Atualize seu cartão, veja faturas ou cancele quando quiser
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Status Card - TRIAL EXPIRADO */}
+        {subscriptionData.trialEnded && !subscriptionData.isActive && (
+          <Card className="border-destructive/30 bg-destructive/5">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <XCircle className="w-5 h-5 text-destructive" />
+                  Período de Teste Encerrado
+                </CardTitle>
+                <Badge variant="destructive">
+                  Expirado
+                </Badge>
+              </div>
+              <CardDescription className="text-destructive">
+                Assine agora para continuar usando o Profe PJ
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                onClick={handleSubscribe}
+                className="w-full bg-primary hover:bg-primary/90"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Assinar Agora - R$ 29,90/mês
+                  </>
+                )}
+              </Button>
+            </CardContent>
           </Card>
         )}
 
@@ -160,7 +322,7 @@ export default function AssinaturaPage() {
             <div className="text-4xl font-bold text-primary">
               R$ 29,90<span className="text-lg text-muted-foreground">/mês</span>
             </div>
-            {!subscription.hasAccess && (
+            {!subscriptionData.hasAccess && (
               <CardDescription className="text-base font-semibold text-green-600">
                 + 14 dias grátis para testar
               </CardDescription>
@@ -199,7 +361,7 @@ export default function AssinaturaPage() {
             </div>
 
             <div className="pt-4">
-              {subscription.hasAccess && subscription.isActive ? (
+              {subscriptionData.hasAccess && subscriptionData.isActive ? (
                 <Button
                   onClick={handleManageBilling}
                   variant="outline"
@@ -226,7 +388,7 @@ export default function AssinaturaPage() {
                   ) : (
                     <>
                       <CreditCard className="w-5 h-5 mr-2" />
-                      {subscription.isTrialing ? "Continuar Usando" : "Começar Agora"}
+                      {subscriptionData.isTrialing ? "Continuar Usando" : "Começar Agora"}
                     </>
                   )}
                 </Button>
