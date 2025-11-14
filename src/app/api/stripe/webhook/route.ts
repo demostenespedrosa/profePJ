@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe/server';
 import Stripe from 'stripe';
-import { initializeFirebase } from '@/firebase';
-import { doc, setDoc, updateDoc } from 'firebase/firestore';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
-const { firestore } = initializeFirebase();
+// Initialize Firebase Admin
+if (!getApps().length) {
+  initializeApp({
+    credential: cert({
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
+  });
+}
+
+const firestore = getFirestore();
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -84,16 +95,22 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
     trialEnd: subscription.trial_end ? new Date((subscription as any).trial_end * 1000).toISOString() : null,
   };
 
-  // Update subscription document
-  const subscriptionRef = doc(firestore, `users/${userId}/subscription/current`);
-  await setDoc(subscriptionRef, subscriptionData, { merge: true });
+  // Update subscription document (Admin SDK syntax)
+  await firestore
+    .collection('users')
+    .doc(userId)
+    .collection('subscription')
+    .doc('current')
+    .set(subscriptionData, { merge: true });
 
-  // Update user profile
-  const userRef = doc(firestore, `users/${userId}`);
-  await updateDoc(userRef, {
-    subscriptionStatus: subscription.status,
-    stripeCustomerId: subscription.customer as string,
-  });
+  // Update user profile (Admin SDK syntax)
+  await firestore
+    .collection('users')
+    .doc(userId)
+    .update({
+      subscriptionStatus: subscription.status,
+      stripeCustomerId: subscription.customer as string,
+    });
 
   console.log(`Subscription ${subscription.status} for user ${userId}`);
 }
@@ -102,10 +119,12 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const userId = subscription.metadata.firebaseUserId;
   if (!userId) return;
 
-  const userRef = doc(firestore, `users/${userId}`);
-  await updateDoc(userRef, {
-    subscriptionStatus: 'canceled',
-  });
+  await firestore
+    .collection('users')
+    .doc(userId)
+    .update({
+      subscriptionStatus: 'canceled',
+    });
 
   console.log(`Subscription canceled for user ${userId}`);
 }
@@ -132,10 +151,12 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
   const userId = subscription.metadata.firebaseUserId;
   if (!userId) return;
 
-  const userRef = doc(firestore, `users/${userId}`);
-  await updateDoc(userRef, {
-    subscriptionStatus: 'past_due',
-  });
+  await firestore
+    .collection('users')
+    .doc(userId)
+    .update({
+      subscriptionStatus: 'past_due',
+    });
 
   console.log(`Payment failed for user ${userId}`);
 }
