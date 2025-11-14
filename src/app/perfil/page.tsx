@@ -5,7 +5,7 @@ import MobileScreen from "@/components/layout/mobile-screen";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Bell, ChevronRight, HelpCircle, LogOut, School, Shield, User as UserIcon } from "lucide-react";
+import { Bell, ChevronRight, CreditCard, HelpCircle, LogOut, School, Shield, User as UserIcon } from "lucide-react";
 import { useFirebase } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -15,6 +15,7 @@ import Link from "next/link";
 
 const menuItems = [
     { icon: UserIcon, label: "Meus Dados", href: "/perfil/meus-dados" },
+    { icon: CreditCard, label: "Assinatura e Pagamento", href: "/assinatura" },
     { icon: School, label: "Instituições de Ensino", href: "/instituicoes" },
     { icon: Bell, label: "Notificações", href: "/perfil/notificacoes" },
     { icon: Shield, label: "Segurança", href: "/perfil/seguranca" },

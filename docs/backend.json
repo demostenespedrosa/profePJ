@@ -29,9 +29,71 @@
         "dasDueDate": {
           "type": "number",
           "description": "The day of the month the user's DAS tax is due."
+        },
+        "stripeCustomerId": {
+          "type": "string",
+          "description": "Stripe customer ID for billing."
+        },
+        "trialEndsAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the free trial period ends."
+        },
+        "subscriptionStatus": {
+          "type": "string",
+          "enum": ["trialing", "active", "past_due", "canceled", "unpaid"],
+          "description": "Current subscription status.",
+          "default": "trialing"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Account creation date."
         }
       },
-      "required": ["name", "email", "dasDueDate"]
+      "required": ["name", "email", "dasDueDate", "createdAt"]
+    },
+    "Subscription": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Subscription",
+      "type": "object",
+      "description": "Represents a user's subscription information.",
+      "properties": {
+        "stripeSubscriptionId": {
+          "type": "string",
+          "description": "Stripe subscription ID."
+        },
+        "stripePriceId": {
+          "type": "string",
+          "description": "Stripe price ID being charged."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["trialing", "active", "past_due", "canceled", "unpaid", "incomplete"],
+          "description": "Subscription status from Stripe."
+        },
+        "currentPeriodStart": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Start of the current billing period."
+        },
+        "currentPeriodEnd": {
+          "type": "string",
+          "format": "date-time",
+          "description": "End of the current billing period."
+        },
+        "cancelAtPeriodEnd": {
+          "type": "boolean",
+          "description": "Whether subscription will cancel at period end.",
+          "default": false
+        },
+        "trialEnd": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the trial period ends."
+        }
+      },
+      "required": ["status"]
     },
     "Institution": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -202,6 +264,10 @@
     "/users/{userId}/monthly_obligations/{obligationId}": {
       "schema": { "$ref": "#/entities/MonthlyObligation" },
       "description": "Represents the user's monthly tax obligation (DAS)."
+    },
+    "/users/{userId}/subscription": {
+      "schema": { "$ref": "#/entities/Subscription" },
+      "description": "Stores the user's subscription information from Stripe."
     }
   }
 }

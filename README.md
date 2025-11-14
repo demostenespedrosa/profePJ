@@ -6,12 +6,14 @@
 
 ## ✨ Destaques
 
+- 💳 **Micro-SaaS:** Modelo de assinatura mensal (R$ 29,90) com 14 dias grátis
 - 🎮 **Gamificação:** Sistema de streaks, XP e "derrote o Monstro do DAS"
 - 🤖 **IA Generativa:** Saudações personalizadas e feedback motivacional com Google Gemini
 - 💰 **Potinhos Automágicos:** Alocação automática para 13º, férias e seus sonhos
 - 📅 **Agenda Inteligente:** Calendário visual com importação em lote de aulas
 - 🎉 **Feedback Dopaminérgico:** Animações, confetti e celebrações a cada conquista
 - 🏖️ **Gestão de Recessos:** Alertas proativos e cálculo automático de metas
+- 📱 **PWA:** Instalável como app nativo, funciona offline
 
 ## 🚀 Tecnologias
 
@@ -30,6 +32,10 @@
 ### IA & Automação
 - **Google Genkit** (orquestração de IA)
 - **Gemini 2.5 Flash** (geração de conteúdo personalizado)
+
+### Pagamentos & Assinatura
+- **Stripe** (checkout e gerenciamento de assinaturas)
+- **Webhooks** (sincronização automática de status)
 
 ## 📦 Instalação
 
@@ -53,22 +59,33 @@ npm install
 
 3. **Configure as variáveis de ambiente:**
 
-Crie um arquivo `.env.local` na raiz do projeto:
-```env
-# Firebase Configuration
-NEXT_PUBLIC_FIREBASE_API_KEY=sua_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=seu_auth_domain
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=seu_project_id
+Crie um arquivo `.env.local` na raiz do projeto (use `.env.example` como referência):
 
+**Nota:** Firebase já está configurado em `src/firebase/config.ts` - não precisa de variáveis de ambiente.
+
+```env
 # Google AI (Genkit)
 GOOGLE_GENAI_API_KEY=sua_gemini_api_key
+
+# Stripe Configuration (teste)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_STRIPE_PRODUCT_ID=prod_...
+NEXT_PUBLIC_STRIPE_PRICE_ID=price_...
+
+# App Configuration
+NEXT_PUBLIC_TRIAL_DAYS=14
+NEXT_PUBLIC_APP_URL=http://localhost:9002
 ```
 
-4. **Configure o Firebase:**
-- Crie um projeto no [Firebase Console](https://console.firebase.google.com)
-- Ative Authentication (Email/Password)
-- Crie um banco Firestore
-- Atualize o arquivo `src/firebase/config.ts` com suas credenciais
+📖 **Configuração Stripe**: Veja o guia completo em [`docs/STRIPE_SETUP.md`](./docs/STRIPE_SETUP.md)
+
+4. **Firebase (já configurado):**
+- O projeto já está conectado ao Firebase em `src/firebase/config.ts`
+- Authentication (Email/Password) ativa
+- Cloud Firestore configurado
+- **Não altere a configuração - usuários reais já estão usando!**
 
 5. **Deploy das Firestore Rules:**
 ```bash
@@ -104,7 +121,15 @@ npm start
 
 ## 📱 Funcionalidades Principais
 
-### 🗣️ Cadastro Conversacional
+### � Sistema de Assinatura
+**Modelo Netflix-style**: pague para usar, não pague e não acesse
+- **14 dias grátis** para testar (sem cartão)
+- **R$ 29,90/mês** - cancele quando quiser
+- Checkout transparente via Stripe
+- Portal self-service para gerenciar assinatura
+- Controle de acesso automático baseado em status
+
+### �🗣️ Cadastro Conversacional
 Interface de chat amigável que coleta informações do usuário de forma natural:
 - Nome e informações pessoais
 - Escola e valor/hora
@@ -191,7 +216,50 @@ profePJ/
 - Feedback visual imediato
 - Mobile-first
 
-## 🔐 Segurança
+## � Deploy na Vercel
+
+O projeto está **pronto para deploy** na Vercel! 
+
+### Guia Rápido
+
+```bash
+# 1. Instale a CLI da Vercel
+npm i -g vercel
+
+# 2. Faça login
+vercel login
+
+# 3. Deploy
+vercel --prod
+```
+
+### Configuração Necessária
+
+Após o deploy, configure as variáveis de ambiente no Dashboard da Vercel:
+- Firebase (API Key, Project ID, etc.)
+- Google AI (Gemini API Key)
+- Stripe (chaves **live** para produção)
+
+📖 **Guia completo de deploy**: [`docs/VERCEL_DEPLOY.md`](./docs/VERCEL_DEPLOY.md)
+
+### Verificação Pré-Deploy
+
+Execute antes de fazer deploy:
+```bash
+./scripts/check-deploy.sh
+```
+
+## 📚 Documentação Completa
+
+- 📘 [**Configuração Stripe**](./docs/STRIPE_SETUP.md) - Setup passo a passo do pagamento
+- 🚀 [**Deploy na Vercel**](./docs/VERCEL_DEPLOY.md) - Guia de produção
+- 💳 [**Sistema de Assinatura**](./docs/SUBSCRIPTION_SYSTEM.md) - Visão técnica
+- ✅ [**Checklist de Deploy**](./docs/IMPLEMENTATION_CHECKLIST.md) - Tarefas pendentes
+- 📱 [**Guia PWA**](./docs/PWA-GUIDE.md) - Progressive Web App
+- 🗄️ [**Schema Backend**](./docs/backend.json) - Estrutura Firestore
+- 📖 [**Blueprint**](./docs/blueprint.md) - Especificação completa do produto
+
+## �🔐 Segurança
 
 - Autenticação Firebase com cookies HTTP
 - Firestore Rules: usuários acessam apenas seus dados
@@ -245,8 +313,17 @@ O Profe PJ é um **PWA completo**! Isso significa que você pode:
 
 ## 🎯 Roadmap
 
+### ✅ Concluído
 - [x] PWA com Service Worker e modo offline
-- [ ] Ícones de app personalizados
+- [x] Ícones de app personalizados
+- [x] Sistema de assinatura Stripe
+- [x] Trial gratuito de 14 dias
+- [x] Portal de gerenciamento de assinatura
+- [x] Webhooks Stripe para sincronização
+- [x] Controle de acesso baseado em assinatura
+- [x] Deploy pronto para Vercel
+
+### 🔜 Próximos Passos
 - [ ] Cloud Function para distribuição automática nos potinhos
 - [ ] Som "ka-ching" ao completar aulas
 - [ ] Haptic feedback em dispositivos móveis
@@ -255,6 +332,8 @@ O Profe PJ é um **PWA completo**! Isso significa que você pode:
 - [ ] Gráficos de evolução financeira
 - [ ] Exportação de relatórios para contabilidade
 - [ ] Integração com bancos (Open Finance)
+- [ ] Plano anual com desconto
+- [ ] Programa de indicação (referral)
 
 ---
 

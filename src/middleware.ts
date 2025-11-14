@@ -4,8 +4,12 @@ export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
   const token = request.cookies.get('firebase-auth-token');
 
-  // Allow access to login, signup, and static assets
-  if (url.pathname.startsWith('/login') || url.pathname.startsWith('/cadastro') || url.pathname.startsWith('/_next') || url.pathname.startsWith('/static')) {
+  // Public routes that don't require authentication
+  const publicRoutes = ['/login', '/cadastro', '/assinatura'];
+  const isPublicRoute = publicRoutes.some(route => url.pathname.startsWith(route));
+
+  // Allow access to public routes and static assets
+  if (isPublicRoute || url.pathname.startsWith('/_next') || url.pathname.startsWith('/static') || url.pathname.startsWith('/offline') || url.pathname.includes('.')) {
     return NextResponse.next();
   }
 
@@ -15,7 +19,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // If token exists, allow the request
+  // Note: Subscription access control is handled client-side with useSubscription hook
+  // and in components with SubscriptionGate (Edge middleware can't access Firestore)
+  
   return NextResponse.next();
 }
 

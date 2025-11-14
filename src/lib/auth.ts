@@ -3,6 +3,7 @@
 
 import { Auth, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { Firestore, doc, writeBatch, collection } from "firebase/firestore";
+import { addDays } from "date-fns";
 
 const schoolColors = ["#34D399", "#F87171", "#60A5FA", "#FBBF24", "#A78BFA"];
 
@@ -17,10 +18,14 @@ export async function signUpAndCreateProfile(auth: Auth, firestore: Firestore, d
         displayName: data.name
     });
 
-    // 3. Create a batch write to save all data to Firestore atomically
+    // 3. Calculate trial end date (14 days from now)
+    const now = new Date();
+    const trialEndsAt = addDays(now, parseInt(process.env.NEXT_PUBLIC_TRIAL_DAYS || '14'));
+
+    // 4. Create a batch write to save all data to Firestore atomically
     const batch = writeBatch(firestore);
 
-    // 3.1. User profile document
+    // 4.1. User profile document with subscription info
     const userDocRef = doc(firestore, "users", user.uid);
     const userProfileData = {
         name: data.name,
@@ -28,10 +33,22 @@ export async function signUpAndCreateProfile(auth: Auth, firestore: Firestore, d
         dasDueDate: data.dasDueDate,
         streakDays: 0,
         xpTotal: 0,
+        subscriptionStatus: 'trialing',
+        trialEndsAt: trialEndsAt.toISOString(),
+        createdAt: now.toISOString(),
     };
     batch.set(userDocRef, userProfileData);
 
-    // 3.2. Initial institution document
+    // 4.2. Initial subscription document
+    const subscriptionDocRef = doc(firestore, `users/${user.uid}/subscription/current`);
+    const subscriptionData = {
+        status: 'trialing',
+        trialEnd: trialEndsAt.toISOString(),
+        cancelAtPeriodEnd: false,
+    };
+    batch.set(subscriptionDocRef, subscriptionData);
+
+    // 4.3. Initial institution document
     const institutionCollectionRef = collection(firestore, `users/${user.uid}/institutions`);
     const institutionDocRef = doc(institutionCollectionRef); // Create a reference with a new auto-generated ID
     const institutionData = {
@@ -41,7 +58,7 @@ export async function signUpAndCreateProfile(auth: Auth, firestore: Firestore, d
     };
     batch.set(institutionDocRef, institutionData);
 
-    // 3.3. Mandatory pots
+    // 4.4. Mandatory pots
     const vacationPotRef = doc(firestore, `users/${user.uid}/pots/ferias`);
     const thirteenthPotRef = doc(firestore, `users/${user.uid}/pots/13salario`);
 
@@ -61,10 +78,10 @@ export async function signUpAndCreateProfile(auth: Auth, firestore: Firestore, d
         allocationPercentage: 10,
     });
 
-    // 4. Commit the batch
+    // 5. Commit the batch
     await batch.commit();
 
-    // 5. Set auth token cookie
+    // 6. Set auth token cookie
     const idToken = await user.getIdToken();
     document.cookie = `firebase-auth-token=${idToken}; path=/; max-age=86400`; // 24 hours
 
